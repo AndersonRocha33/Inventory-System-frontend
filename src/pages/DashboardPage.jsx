@@ -75,9 +75,7 @@ function DashboardPage() {
       <div className="card">
         <h2>Top 10 itens divergentes</h2>
 
-        {top10Divergentes.length === 0 && (
-          <p>Nenhuma divergência encontrada.</p>
-        )}
+        {top10Divergentes.length === 0 && <p>Nenhuma divergência encontrada.</p>}
 
         {top10Divergentes.map((item) => (
           <div key={item.item_id} className="dashboard-row">

@@ -19,6 +19,9 @@ function InventoryPage() {
   const [message, setMessage] = useState("")
   const [loadingUpload, setLoadingUpload] = useState(false)
 
+  const apiBaseUrl = import.meta.env.VITE_API_URL
+  const backendBaseUrl = apiBaseUrl.replace(/\/inventory$/, "")
+
   async function loadPositions() {
     try {
       const response = await api.get(`/${inventarioId}/positions`)
@@ -74,11 +77,9 @@ function InventoryPage() {
       await loadPositionsById(novoInventarioId)
     } catch (error) {
       console.error("Erro completo no upload:", error)
-      console.error("response:", error.response)
-      console.error("data:", error.response?.data)
 
       if (!error.response) {
-        setMessage("Erro de rede. Verifique se o backend publicado está online e com CORS liberado.")
+        setMessage("Erro de rede. Verifique se o backend publicado está online.")
         return
       }
 
@@ -214,17 +215,13 @@ function InventoryPage() {
   }
 
   function exportCsv() {
-    window.open(
-      `${import.meta.env.VITE_API_URL.replace("/inventory", "")}/inventory/${inventarioId}/export`,
-      "_blank"
-    )
+    const url = `${backendBaseUrl}/inventory/${inventarioId}/export`
+    window.open(url, "_blank")
   }
 
   function openDashboard() {
-    window.open(
-      `${window.location.origin}/dashboard?inventarioId=${inventarioId}`,
-      "_blank"
-    )
+    const url = `${window.location.origin}/dashboard?inventarioId=${inventarioId}`
+    window.open(url, "_blank")
   }
 
   useEffect(() => {
