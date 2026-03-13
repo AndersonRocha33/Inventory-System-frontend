@@ -94,28 +94,6 @@ function InventoryPage() {
     }
   }
 
-  async function startCounting(position) {
-    try {
-      const response = await api.post(`/positions/${position.id}/start`, {
-        operador: operator
-      })
-
-      setSelectedPosition(response.data.position)
-      setMessage("Contagem iniciada com sucesso")
-
-      await loadItems(position.id)
-      await loadPositions()
-    } catch (error) {
-      console.error("Erro ao iniciar contagem:", error)
-      setMessage(
-        error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao iniciar contagem"
-      )
-    }
-  }
-
   async function loadItems(positionId) {
     try {
       const response = await api.get(`/positions/${positionId}/items`)
@@ -131,12 +109,56 @@ function InventoryPage() {
     }
   }
 
+  async function loadDivergentItems(positionId) {
+    try {
+      const response = await api.get(`/positions/${positionId}/divergent-items`)
+      setItems(response.data)
+    } catch (error) {
+      console.error("Erro ao carregar itens divergentes:", error)
+      setMessage(
+        error.response?.data?.details ||
+        error.response?.data?.error ||
+        error.message ||
+        "Erro ao carregar itens divergentes"
+      )
+    }
+  }
+
+  async function startCounting(position) {
+    try {
+      const response = await api.post(`/positions/${position.id}/start`, {
+        operador: operator
+      })
+
+      const posicaoAtual = response.data.position
+      setSelectedPosition(posicaoAtual)
+      setCounts({})
+
+      if (Number(posicaoAtual.fase_atual || 1) > 1) {
+        await loadDivergentItems(position.id)
+        setMessage(`Recontagem iniciada - fase ${posicaoAtual.fase_atual}`)
+      } else {
+        await loadItems(position.id)
+        setMessage("Primeira contagem iniciada com sucesso")
+      }
+
+      await loadPositions()
+    } catch (error) {
+      console.error("Erro ao iniciar contagem:", error)
+      setMessage(
+        error.response?.data?.details ||
+        error.response?.data?.error ||
+        error.message ||
+        "Erro ao iniciar contagem"
+      )
+    }
+  }
+
   async function registerCount(itemId) {
     try {
       await api.post(`/items/${itemId}/count`, {
         operador: operator,
-        quantidade: Number(counts[itemId] || 0),
-        tipo: "primeira_contagem"
+        quantidade: Number(counts[itemId] || 0)
       })
 
       setMessage("Contagem registrada")
@@ -169,7 +191,11 @@ function InventoryPage() {
         quantidade: ""
       })
 
-      await loadItems(selectedPosition.id)
+      if (Number(selectedPosition.fase_atual || 1) > 1) {
+        await loadDivergentItems(selectedPosition.id)
+      } else {
+        await loadItems(selectedPosition.id)
+      }
     } catch (error) {
       console.error("Erro ao adicionar item extra:", error)
       setMessage(
@@ -191,13 +217,15 @@ function InventoryPage() {
       const totalDivergencias = response.data.totalDivergencias || 0
 
       if (newStatus === "finalizado") {
-        setMessage("Posição finalizada com sucesso")
+        setMessage(response.data.message || "Posição finalizada com sucesso")
         setSelectedPosition(null)
         setItems([])
         setCounts({})
       } else if (newStatus === "recontagem") {
-        setMessage(`Posição enviada para recontagem. Divergências: ${totalDivergencias}`)
-        await loadItems(selectedPosition.id)
+        setMessage(response.data.message || `Posição enviada para recontagem. Divergências: ${totalDivergencias}`)
+        setSelectedPosition(null)
+        setItems([])
+        setCounts({})
       } else {
         setMessage(response.data.message || "Posição processada")
       }
@@ -280,7 +308,10 @@ function InventoryPage() {
               <div>
                 <strong>{position.codigo}</strong>
                 <p>Status: {position.status}</p>
-                <p>Operador: {position.operador_atual || "-"}</p>
+                <p>Fase atual: {position.fase_atual}</p>
+                <p>1º contador: {position.primeiro_operador || "-"}</p>
+                <p>2º contador: {position.segundo_operador || "-"}</p>
+                <p>3º contador: {position.terceiro_operador || "-"}</p>
               </div>
 
               <button
@@ -291,7 +322,7 @@ function InventoryPage() {
                   position.status === "finalizado"
                 }
               >
-                Iniciar
+                {Number(position.fase_atual || 1) > 1 ? "Iniciar recontagem" : "Iniciar"}
               </button>
             </div>
           ))}
@@ -301,9 +332,13 @@ function InventoryPage() {
           <h2>Itens da posição</h2>
 
           {selectedPosition && (
-            <p>
-              <strong>Posição:</strong> {selectedPosition.codigo}
-            </p>
+            <>
+              <p><strong>Posição:</strong> {selectedPosition.codigo}</p>
+              <p><strong>Fase:</strong> {selectedPosition.fase_atual}</p>
+              {Number(selectedPosition.fase_atual || 1) > 1 && (
+                <p><strong>Modo:</strong> exibindo apenas itens divergentes da fase anterior</p>
+              )}
+            </>
           )}
 
           {items.map((item) => (
