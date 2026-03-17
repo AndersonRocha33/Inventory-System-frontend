@@ -215,4 +215,60 @@ button:disabled {
   }
 }
 
+.mobile-page {
+  max-width: 720px;
+}
+
+.mobile-header-card {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.mobile-header-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mobile-item-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobile-item-info p {
+  margin: 6px 0 0;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 12px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button,
+  .mobile-header-top button,
+  .mobile-item-card button,
+  .card button {
+    width: 100%;
+  }
+
+  input {
+    font-size: 16px;
+  }
+}
+
 }
