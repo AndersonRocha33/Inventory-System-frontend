@@ -137,4 +137,32 @@ button:disabled {
   }
 }
 
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+.report-table th,
+.report-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.report-table th {
+  background: #f3f4f6;
+  font-weight: bold;
+}
+
+.report-table tr:nth-child(even) {
+  background: #fafafa;
+}
+
 }

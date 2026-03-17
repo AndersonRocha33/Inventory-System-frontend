@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import api from "./services/api"
 import DashboardPage from "./pages/DashboardPage"
+import HistoryReportPage from "./pages/HistoryReportPage"
 import "./index.css"
 
 function InventoryPage() {
@@ -30,9 +31,9 @@ function InventoryPage() {
       console.error("Erro ao carregar posições:", error)
       setMessage(
         error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao carregar posições"
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao carregar posições"
       )
     }
   }
@@ -45,9 +46,9 @@ function InventoryPage() {
       console.error("Erro ao carregar posições por id:", error)
       setMessage(
         error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao carregar posições"
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao carregar posições"
       )
     }
   }
@@ -85,9 +86,9 @@ function InventoryPage() {
 
       setMessage(
         error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao enviar CSV"
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao enviar CSV"
       )
     } finally {
       setLoadingUpload(false)
@@ -102,9 +103,9 @@ function InventoryPage() {
       console.error("Erro ao carregar itens:", error)
       setMessage(
         error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao carregar itens"
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao carregar itens"
       )
     }
   }
@@ -117,42 +118,42 @@ function InventoryPage() {
       console.error("Erro ao carregar itens divergentes:", error)
       setMessage(
         error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao carregar itens divergentes"
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao carregar itens divergentes"
       )
     }
   }
 
   async function startCounting(position) {
-  try {
-    const response = await api.post(`/positions/${position.id}/start`, {
-      operador: operator
-    })
+    try {
+      const response = await api.post(`/positions/${position.id}/start`, {
+        operador: operator
+      })
 
-    const posicaoAtual = response.data.position
-    setSelectedPosition(posicaoAtual)
-    setCounts({})
+      const posicaoAtual = response.data.position
+      setSelectedPosition(posicaoAtual)
+      setCounts({})
 
-    if (Number(posicaoAtual.fase_atual || 1) > 1) {
-      await loadDivergentItems(position.id)
-      setMessage(`Recontagem iniciada - fase ${posicaoAtual.fase_atual}`)
-    } else {
-      await loadItems(position.id)
-      setMessage("Primeira contagem iniciada com sucesso")
+      if (Number(posicaoAtual.fase_atual || 1) > 1) {
+        await loadDivergentItems(position.id)
+        setMessage(`Recontagem iniciada - fase ${posicaoAtual.fase_atual}`)
+      } else {
+        await loadItems(position.id)
+        setMessage("Primeira contagem iniciada com sucesso")
+      }
+
+      await loadPositions()
+    } catch (error) {
+      console.error("Erro ao iniciar contagem:", error)
+      setMessage(
+        error.response?.data?.details ||
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao iniciar contagem"
+      )
     }
-
-    await loadPositions()
-  } catch (error) {
-    console.error("Erro ao iniciar contagem:", error)
-    setMessage(
-      error.response?.data?.details ||
-      error.response?.data?.error ||
-      error.message ||
-      "Erro ao iniciar contagem"
-    )
   }
-}
 
   async function registerCount(itemId) {
     try {
@@ -166,9 +167,9 @@ function InventoryPage() {
       console.error("Erro ao registrar contagem:", error)
       setMessage(
         error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao registrar contagem"
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao registrar contagem"
       )
     }
   }
@@ -200,9 +201,9 @@ function InventoryPage() {
       console.error("Erro ao adicionar item extra:", error)
       setMessage(
         error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao adicionar item extra"
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao adicionar item extra"
       )
     }
   }
@@ -214,7 +215,7 @@ function InventoryPage() {
       const response = await api.post(`/positions/${selectedPosition.id}/finish`)
 
       const newStatus = response.data.position?.status
-      const totalDivergencias = response.data.totalDivergencias || 0
+      const totalDivergencias = response.data.totalPendentesParaNovaRecontagem || 0
 
       if (newStatus === "finalizado") {
         setMessage(response.data.message || "Posição finalizada com sucesso")
@@ -222,7 +223,10 @@ function InventoryPage() {
         setItems([])
         setCounts({})
       } else if (newStatus === "recontagem") {
-        setMessage(response.data.message || `Posição enviada para recontagem. Divergências: ${totalDivergencias}`)
+        setMessage(
+          response.data.message ||
+            `Posição enviada para recontagem. Divergências: ${totalDivergencias}`
+        )
         setSelectedPosition(null)
         setItems([])
         setCounts({})
@@ -235,9 +239,9 @@ function InventoryPage() {
       console.error("Erro ao finalizar posição:", error)
       setMessage(
         error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao finalizar posição"
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao finalizar posição"
       )
     }
   }
@@ -249,6 +253,11 @@ function InventoryPage() {
 
   function openDashboard() {
     const url = `${window.location.origin}/dashboard?inventarioId=${inventarioId}`
+    window.open(url, "_blank")
+  }
+
+  function openHistoryReport() {
+    const url = `${window.location.origin}/history-report?inventarioId=${inventarioId}`
     window.open(url, "_blank")
   }
 
@@ -293,6 +302,7 @@ function InventoryPage() {
         <div className="actions">
           <button onClick={loadPositions}>Carregar posições</button>
           <button onClick={openDashboard}>Dashboard de acuracidade</button>
+          <button onClick={openHistoryReport}>Relatório histórico</button>
           <button onClick={exportCsv}>Exportar CSV</button>
         </div>
       </div>
@@ -333,10 +343,16 @@ function InventoryPage() {
 
           {selectedPosition && (
             <>
-              <p><strong>Posição:</strong> {selectedPosition.codigo}</p>
-              <p><strong>Fase:</strong> {selectedPosition.fase_atual}</p>
+              <p>
+                <strong>Posição:</strong> {selectedPosition.codigo}
+              </p>
+              <p>
+                <strong>Fase:</strong> {selectedPosition.fase_atual}
+              </p>
               {Number(selectedPosition.fase_atual || 1) > 1 && (
-                <p><strong>Modo:</strong> exibindo apenas itens divergentes da fase anterior</p>
+                <p>
+                  <strong>Modo:</strong> exibindo apenas itens divergentes da fase anterior
+                </p>
               )}
             </>
           )}
@@ -360,9 +376,7 @@ function InventoryPage() {
                 }
               />
 
-              <button onClick={() => registerCount(item.id)}>
-                Salvar
-              </button>
+              <button onClick={() => registerCount(item.id)}>Salvar</button>
             </div>
           ))}
 
@@ -406,13 +420,9 @@ function InventoryPage() {
                 }
               />
 
-              <button onClick={addExtraItem}>
-                Adicionar item extra
-              </button>
+              <button onClick={addExtraItem}>Adicionar item extra</button>
 
-              <button onClick={finishPosition}>
-                Finalizar posição
-              </button>
+              <button onClick={finishPosition}>Finalizar posição</button>
             </>
           )}
         </div>
@@ -424,6 +434,10 @@ function InventoryPage() {
 function App() {
   if (window.location.pathname === "/dashboard") {
     return <DashboardPage />
+  }
+
+  if (window.location.pathname === "/history-report") {
+    return <HistoryReportPage />
   }
 
   return <InventoryPage />
