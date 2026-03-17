@@ -326,4 +326,19 @@ button:disabled {
   }
 }
 
+.password-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.password-field input {
+  flex: 1;
+}
+
+.password-toggle {
+  white-space: nowrap;
+  background: #374151;
+}
+
 }

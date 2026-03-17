@@ -7,10 +7,11 @@ function AuthPage() {
   const [nome, setNome] = useState("")
   const [email, setEmail] = useState("")
   const [senha, setSenha] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const backendBaseUrl = import.meta.env.VITE_API_URL.replace("/inventory", "")
+  const backendBaseUrl = import.meta.env.VITE_BACKEND_URL
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -29,14 +30,20 @@ function AuthPage() {
           ? { email, senha }
           : { nome, email, senha }
 
-      const response = await axios.post(url, payload)
+      const response = await axios.post(url, payload, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
 
       localStorage.setItem("inventory_user", JSON.stringify(response.data.user))
       localStorage.setItem("inventory_token", response.data.token)
 
       window.location.href = "/"
     } catch (error) {
-      console.error(error)
+      console.error("Erro autenticação:", error)
+      console.error("response:", error.response)
+
       setMessage(
         error.response?.data?.details ||
           error.response?.data?.error ||
@@ -75,12 +82,21 @@ function AuthPage() {
           />
 
           <label>Senha</label>
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            placeholder="********"
-          />
+          <div className="password-field">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              placeholder="********"
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
+              {showPassword ? "Ocultar" : "Ver"}
+            </button>
+          </div>
 
           <button type="submit" disabled={loading}>
             {loading
@@ -98,6 +114,7 @@ function AuthPage() {
             <p>
               Não tem conta?{" "}
               <button
+                type="button"
                 className="link-button"
                 onClick={() => setMode("register")}
               >
@@ -108,6 +125,7 @@ function AuthPage() {
             <p>
               Já tem conta?{" "}
               <button
+                type="button"
                 className="link-button"
                 onClick={() => setMode("login")}
               >
