@@ -30,6 +30,12 @@ function InventoryPage() {
       setPositions(response.data)
     } catch (error) {
       console.error("Erro ao carregar posições:", error)
+
+      if (error.response?.status === 401) {
+        logout()
+        return
+      }
+
       setMessage(
         error.response?.data?.details ||
           error.response?.data?.error ||
@@ -45,6 +51,12 @@ function InventoryPage() {
       setPositions(response.data)
     } catch (error) {
       console.error("Erro ao carregar posições por id:", error)
+
+      if (error.response?.status === 401) {
+        logout()
+        return
+      }
+
       setMessage(
         error.response?.data?.details ||
           error.response?.data?.error ||
@@ -80,6 +92,11 @@ function InventoryPage() {
     } catch (error) {
       console.error("Erro completo no upload:", error)
 
+      if (error.response?.status === 401) {
+        logout()
+        return
+      }
+
       if (!error.response) {
         setMessage("Erro de rede. Verifique se o backend publicado está online.")
         return
@@ -112,6 +129,12 @@ function InventoryPage() {
       )}`
     } catch (error) {
       console.error("Erro ao iniciar contagem:", error)
+
+      if (error.response?.status === 401) {
+        logout()
+        return
+      }
+
       setMessage(
         error.response?.data?.details ||
           error.response?.data?.error ||
@@ -122,8 +145,28 @@ function InventoryPage() {
   }
 
   function exportCsv() {
+    const token = localStorage.getItem("inventory_token")
     const url = `${backendBaseUrl}/inventory/${inventarioId}/export`
-    window.open(url, "_blank")
+
+    fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then((response) => response.blob())
+      .then((blob) => {
+        const downloadUrl = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = downloadUrl
+        a.download = "inventario.csv"
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+      })
+      .catch((error) => {
+        console.error(error)
+        setMessage("Erro ao exportar CSV")
+      })
   }
 
   function openDashboard() {
