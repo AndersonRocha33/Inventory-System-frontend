@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import api from "../services/api"
 import "../index.css"
 
@@ -23,6 +23,11 @@ function DashboardPage() {
     loadDashboard()
   }, [inventarioId])
 
+  const maxBarValue = useMemo(() => {
+    if (!report?.graficoDivergencias?.length) return 1
+    return Math.max(...report.graficoDivergencias.map((item) => Number(item.divergenciaTotal || 0)), 1)
+  }, [report])
+
   if (error) {
     return (
       <div className="container">
@@ -45,7 +50,7 @@ function DashboardPage() {
     )
   }
 
-  const { resumo, top10Divergentes } = report
+  const { resumo, top10Divergentes, graficoDivergencias, rankingOperadores } = report
 
   return (
     <div className="container">
@@ -112,6 +117,75 @@ function DashboardPage() {
           <p><strong>Itens corretos:</strong> {resumo.itensCorretos}</p>
           <p><strong>Itens divergentes:</strong> {resumo.itensDivergentes}</p>
           <p><strong>Total de itens contados:</strong> {resumo.itensContados}</p>
+        </div>
+      </div>
+
+      <div className="layout">
+        <div className="card">
+          <h2>Gráfico de Barras — Top SKUs Divergentes</h2>
+
+          {graficoDivergencias.length === 0 && (
+            <p>Nenhuma divergência encontrada.</p>
+          )}
+
+          {graficoDivergencias.map((item) => {
+            const width = (Number(item.divergenciaTotal) / maxBarValue) * 100
+
+            return (
+              <div key={item.sku} className="bar-chart-row">
+                <div className="bar-chart-label">
+                  <strong>{item.sku}</strong>
+                  <span>{item.descricao}</span>
+                </div>
+
+                <div className="bar-chart-track">
+                  <div
+                    className="bar-chart-fill"
+                    style={{ width: `${width}%` }}
+                  />
+                </div>
+
+                <div className="bar-chart-value">
+                  {item.divergenciaTotal}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="card">
+          <h2>Ranking de Operadores</h2>
+
+          {rankingOperadores.length === 0 && (
+            <p>Nenhuma contagem registrada ainda.</p>
+          )}
+
+          {rankingOperadores.length > 0 && (
+            <div className="table-wrapper">
+              <table className="report-table">
+                <thead>
+                  <tr>
+                    <th>Operador</th>
+                    <th>Total</th>
+                    <th>Corretas</th>
+                    <th>Divergentes</th>
+                    <th>% Acerto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rankingOperadores.map((item) => (
+                    <tr key={item.operador}>
+                      <td>{item.operador}</td>
+                      <td>{item.totalContagens}</td>
+                      <td>{item.contagensCorretas}</td>
+                      <td>{item.contagensDivergentes}</td>
+                      <td>{item.percentualAcerto}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
