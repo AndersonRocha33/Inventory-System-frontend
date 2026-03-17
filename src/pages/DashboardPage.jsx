@@ -23,10 +23,22 @@ function DashboardPage() {
     loadDashboard()
   }, [inventarioId])
 
-  const maxBarValue = useMemo(() => {
-    if (!report?.graficoDivergencias?.length) return 1
-    return Math.max(...report.graficoDivergencias.map((item) => Number(item.divergenciaTotal || 0)), 1)
+  const chartData = useMemo(() => {
+    if (!report?.graficoDivergencias) return []
+
+    return report.graficoDivergencias.map((item) => ({
+      sku: item.sku,
+      descricao: item.descricao,
+      divergenciaTotal: Number(
+        item.divergenciaTotal ?? item.divergenciatotal ?? 0
+      )
+    }))
   }, [report])
+
+  const maxBarValue = useMemo(() => {
+    if (!chartData.length) return 1
+    return Math.max(...chartData.map((item) => item.divergenciaTotal), 1)
+  }, [chartData])
 
   if (error) {
     return (
@@ -50,7 +62,7 @@ function DashboardPage() {
     )
   }
 
-  const { resumo, top10Divergentes, graficoDivergencias, rankingOperadores } = report
+  const { resumo, rankingOperadores } = report
 
   return (
     <div className="container">
@@ -81,7 +93,9 @@ function DashboardPage() {
       <div className="layout">
         <div className="card">
           <h2>Avanço de Itens</h2>
-          <p>{resumo.itensContados} de {resumo.totalItens} itens contados</p>
+          <p>
+            {resumo.itensContados} de {resumo.totalItens} itens contados
+          </p>
           <div className="progress-bar">
             <div
               className="progress-fill"
@@ -93,7 +107,9 @@ function DashboardPage() {
 
         <div className="card">
           <h2>Avanço de Posições</h2>
-          <p>{resumo.posicoesFinalizadas} de {resumo.totalPosicoes} posições finalizadas</p>
+          <p>
+            {resumo.posicoesFinalizadas} de {resumo.totalPosicoes} posições finalizadas
+          </p>
           <div className="progress-bar">
             <div
               className="progress-fill"
@@ -124,18 +140,20 @@ function DashboardPage() {
         <div className="card">
           <h2>Gráfico de Barras — Top SKUs Divergentes</h2>
 
-          {graficoDivergencias.length === 0 && (
+          {chartData.length === 0 && (
             <p>Nenhuma divergência encontrada.</p>
           )}
 
-          {graficoDivergencias.map((item) => {
-            const width = (Number(item.divergenciaTotal) / maxBarValue) * 100
+          {chartData.map((item) => {
+            const width = maxBarValue > 0
+              ? (item.divergenciaTotal / maxBarValue) * 100
+              : 0
 
             return (
               <div key={item.sku} className="bar-chart-row">
                 <div className="bar-chart-label">
                   <strong>{item.sku}</strong>
-                  <span>{item.descricao}</span>
+                  <span title={item.descricao}>{item.descricao}</span>
                 </div>
 
                 <div className="bar-chart-track">
@@ -187,23 +205,6 @@ function DashboardPage() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="card">
-        <h2>Top 10 Itens Divergentes</h2>
-
-        {top10Divergentes.length === 0 && <p>Nenhuma divergência encontrada.</p>}
-
-        {top10Divergentes.map((item) => (
-          <div key={`${item.posicao}-${item.sku}`} className="dashboard-row">
-            <strong>{item.sku}</strong> - {item.descricao}
-            <p>Posição: {item.posicao}</p>
-            <p>
-              Sistema: {item.quantidade_sistema} | Contado: {item.quantidade_contada}
-            </p>
-            <p><strong>Diferença:</strong> {item.diferencaAbsoluta}</p>
-          </div>
-        ))}
       </div>
     </div>
   )

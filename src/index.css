@@ -178,6 +178,13 @@ button:disabled {
   flex-direction: column;
   gap: 4px;
   font-size: 14px;
+  min-width: 0;
+}
+
+.bar-chart-label span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bar-chart-track {
