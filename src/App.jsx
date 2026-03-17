@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import api from "./services/api"
+import AuthPage from "./pages/AuthPage"
 import DashboardPage from "./pages/DashboardPage"
 import HistoryReportPage from "./pages/HistoryReportPage"
 import MobileCountPage from "./pages/MobileCountPage"
@@ -7,12 +8,15 @@ import "./index.css"
 
 function InventoryPage() {
   const params = new URLSearchParams(window.location.search)
+  const loggedUser = JSON.parse(localStorage.getItem("inventory_user") || "null")
 
   const [inventarioId, setInventarioId] = useState(
     params.get("inventarioId") || 1
   )
   const [positions, setPositions] = useState([])
-  const [operator, setOperator] = useState(params.get("operador") || "")
+  const [operator, setOperator] = useState(
+    params.get("operador") || loggedUser?.nome || ""
+  )
   const [uploadFile, setUploadFile] = useState(null)
   const [message, setMessage] = useState("")
   const [loadingUpload, setLoadingUpload] = useState(false)
@@ -132,6 +136,12 @@ function InventoryPage() {
     window.open(url, "_blank")
   }
 
+  function logout() {
+    localStorage.removeItem("inventory_user")
+    localStorage.removeItem("inventory_token")
+    window.location.href = "/login"
+  }
+
   useEffect(() => {
     loadPositions()
   }, [inventarioId])
@@ -139,6 +149,15 @@ function InventoryPage() {
   return (
     <div className="container">
       <h1>Sistema de Inventário</h1>
+
+      <div className="card">
+        <div className="top-bar">
+          <div>
+            <strong>Usuário:</strong> {loggedUser?.nome || "-"}
+          </div>
+          <button onClick={logout}>Sair</button>
+        </div>
+      </div>
 
       <div className="card">
         <h2>Upload do CSV</h2>
@@ -214,6 +233,16 @@ function InventoryPage() {
 }
 
 function App() {
+  const loggedUser = JSON.parse(localStorage.getItem("inventory_user") || "null")
+
+  if (!loggedUser && window.location.pathname !== "/login") {
+    return <AuthPage />
+  }
+
+  if (window.location.pathname === "/login") {
+    return <AuthPage />
+  }
+
   if (window.location.pathname === "/dashboard") {
     return <DashboardPage />
   }

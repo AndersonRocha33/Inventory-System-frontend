@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import api from "../services/api"
 import "../index.css"
 
@@ -6,6 +6,7 @@ function MobileCountPage() {
   const [position, setPosition] = useState(null)
   const [items, setItems] = useState([])
   const [counts, setCounts] = useState({})
+  const [savedItems, setSavedItems] = useState({})
   const [extraItem, setExtraItem] = useState({
     sku: "",
     descricao: "",
@@ -59,7 +60,13 @@ function MobileCountPage() {
         quantidade: Number(counts[itemId] || 0)
       })
 
+      setSavedItems((prev) => ({
+        ...prev,
+        [itemId]: true
+      }))
+
       setMessage("Contagem registrada")
+      return true
     } catch (error) {
       console.error(error)
       setMessage(
@@ -68,6 +75,21 @@ function MobileCountPage() {
           error.message ||
           "Erro ao registrar contagem"
       )
+      return false
+    }
+  }
+
+  async function registerCountAndNext(itemId, index) {
+    const success = await registerCount(itemId)
+
+    if (!success) return
+
+    const nextIndex = index + 1
+    if (items[nextIndex]) {
+      const nextElement = document.getElementById(`count-input-${items[nextIndex].id}`)
+      if (nextElement) {
+        nextElement.focus()
+      }
     }
   }
 
@@ -131,6 +153,14 @@ function MobileCountPage() {
     )}`
   }
 
+  const progress = useMemo(() => {
+    const total = items.length
+    const done = Object.keys(savedItems).length
+    const percent = total > 0 ? Math.round((done / total) * 100) : 0
+
+    return { total, done, percent }
+  }, [items, savedItems])
+
   useEffect(() => {
     loadPositionData()
   }, [positionId])
@@ -171,6 +201,17 @@ function MobileCountPage() {
             <strong>Modo:</strong> exibindo apenas itens divergentes
           </p>
         )}
+
+        <p>
+          <strong>Progresso:</strong> {progress.done} de {progress.total}
+        </p>
+        <div className="progress-bar">
+          <div
+            className="progress-fill"
+            style={{ width: `${progress.percent}%` }}
+          />
+        </div>
+        <p>{progress.percent}%</p>
       </div>
 
       {message && <p className="message">{message}</p>}
@@ -180,14 +221,18 @@ function MobileCountPage() {
 
         {items.length === 0 && <p>Nenhum item para contar.</p>}
 
-        {items.map((item) => (
-          <div key={item.id} className="mobile-item-card">
+        {items.map((item, index) => (
+          <div
+            key={item.id}
+            className={`mobile-item-card ${savedItems[item.id] ? "mobile-item-saved" : ""}`}
+          >
             <div className="mobile-item-info">
               <strong>{item.sku}</strong>
               <p>{item.descricao}</p>
             </div>
 
             <input
+              id={`count-input-${item.id}`}
               type="number"
               inputMode="numeric"
               placeholder="Qtd física"
@@ -200,7 +245,12 @@ function MobileCountPage() {
               }
             />
 
-            <button onClick={() => registerCount(item.id)}>Salvar</button>
+            <div className="mobile-item-actions">
+              <button onClick={() => registerCount(item.id)}>Salvar</button>
+              <button onClick={() => registerCountAndNext(item.id, index)}>
+                Salvar e próximo
+              </button>
+            </div>
           </div>
         ))}
       </div>

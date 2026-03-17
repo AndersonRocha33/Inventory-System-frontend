@@ -271,4 +271,59 @@ button:disabled {
   }
 }
 
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f4f6f8;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-switch {
+  margin-top: 14px;
+}
+
+.link-button {
+  background: transparent;
+  color: #2563eb;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mobile-item-saved {
+  border: 2px solid #22c55e;
+  background: #f0fdf4;
+}
+
+@media (max-width: 600px) {
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mobile-item-actions {
+    flex-direction: column;
+  }
+}
+
 }
