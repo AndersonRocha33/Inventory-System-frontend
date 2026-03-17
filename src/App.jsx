@@ -125,34 +125,34 @@ function InventoryPage() {
   }
 
   async function startCounting(position) {
-    try {
-      const response = await api.post(`/positions/${position.id}/start`, {
-        operador: operator
-      })
+  try {
+    const response = await api.post(`/positions/${position.id}/start`, {
+      operador: operator
+    })
 
-      const posicaoAtual = response.data.position
-      setSelectedPosition(posicaoAtual)
-      setCounts({})
+    const posicaoAtual = response.data.position
+    setSelectedPosition(posicaoAtual)
+    setCounts({})
 
-      if (Number(posicaoAtual.fase_atual || 1) > 1) {
-        await loadDivergentItems(position.id)
-        setMessage(`Recontagem iniciada - fase ${posicaoAtual.fase_atual}`)
-      } else {
-        await loadItems(position.id)
-        setMessage("Primeira contagem iniciada com sucesso")
-      }
-
-      await loadPositions()
-    } catch (error) {
-      console.error("Erro ao iniciar contagem:", error)
-      setMessage(
-        error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao iniciar contagem"
-      )
+    if (Number(posicaoAtual.fase_atual || 1) > 1) {
+      await loadDivergentItems(position.id)
+      setMessage(`Recontagem iniciada - fase ${posicaoAtual.fase_atual}`)
+    } else {
+      await loadItems(position.id)
+      setMessage("Primeira contagem iniciada com sucesso")
     }
+
+    await loadPositions()
+  } catch (error) {
+    console.error("Erro ao iniciar contagem:", error)
+    setMessage(
+      error.response?.data?.details ||
+      error.response?.data?.error ||
+      error.message ||
+      "Erro ao iniciar contagem"
+    )
   }
+}
 
   async function registerCount(itemId) {
     try {

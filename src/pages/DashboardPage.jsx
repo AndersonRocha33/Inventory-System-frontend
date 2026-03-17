@@ -49,36 +49,79 @@ function DashboardPage() {
 
   return (
     <div className="container">
-      <h1>Mini Dashboard de Acuracidade</h1>
+      <h1>Dashboard de Inventário</h1>
+
+      <div className="dashboard-grid">
+        <div className="card metric-card">
+          <h3>Acuracidade</h3>
+          <p className="metric-value">{resumo.acuracidade}%</p>
+        </div>
+
+        <div className="card metric-card">
+          <h3>Total de Itens</h3>
+          <p className="metric-value">{resumo.totalItens}</p>
+        </div>
+
+        <div className="card metric-card">
+          <h3>Itens Divergentes</h3>
+          <p className="metric-value">{resumo.itensDivergentes}</p>
+        </div>
+
+        <div className="card metric-card">
+          <h3>Posições Finalizadas</h3>
+          <p className="metric-value">{resumo.posicoesFinalizadas}</p>
+        </div>
+      </div>
 
       <div className="layout">
         <div className="card">
-          <h2>Resumo</h2>
-          <p><strong>Acuracidade:</strong> {resumo.acuracidade}%</p>
-          <p><strong>Total de itens:</strong> {resumo.totalItens}</p>
-          <p><strong>Total de itens contados:</strong> {resumo.itensContados}</p>
-          <p><strong>Itens corretos:</strong> {resumo.itensCorretos}</p>
-          <p><strong>Itens divergentes:</strong> {resumo.itensDivergentes}</p>
+          <h2>Avanço de Itens</h2>
+          <p>{resumo.itensContados} de {resumo.totalItens} itens contados</p>
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${resumo.percentualItensContados}%` }}
+            />
+          </div>
+          <p>{resumo.percentualItensContados}%</p>
         </div>
 
         <div className="card">
-          <h2>Avanço do inventário</h2>
-          <p><strong>Total de posições:</strong> {resumo.totalPosicoes}</p>
-          <p><strong>Posições finalizadas:</strong> {resumo.posicoesFinalizadas}</p>
-          <p><strong>Posições em recontagem:</strong> {resumo.posicoesRecontagem}</p>
-          <p><strong>Posições em andamento:</strong> {resumo.posicoesEmAndamento}</p>
-          <p><strong>% de itens contados:</strong> {resumo.percentualItensContados}%</p>
-          <p><strong>% de posições já contadas:</strong> {resumo.percentualPosicoesContadas}%</p>
+          <h2>Avanço de Posições</h2>
+          <p>{resumo.posicoesFinalizadas} de {resumo.totalPosicoes} posições finalizadas</p>
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${resumo.percentualPosicoesContadas}%` }}
+            />
+          </div>
+          <p>{resumo.percentualPosicoesContadas}%</p>
+        </div>
+      </div>
+
+      <div className="layout">
+        <div className="card">
+          <h2>Status das Posições</h2>
+          <p><strong>Finalizadas:</strong> {resumo.posicoesFinalizadas}</p>
+          <p><strong>Em recontagem:</strong> {resumo.posicoesRecontagem}</p>
+          <p><strong>Em andamento:</strong> {resumo.posicoesEmAndamento}</p>
+        </div>
+
+        <div className="card">
+          <h2>Conferência</h2>
+          <p><strong>Itens corretos:</strong> {resumo.itensCorretos}</p>
+          <p><strong>Itens divergentes:</strong> {resumo.itensDivergentes}</p>
+          <p><strong>Total de itens contados:</strong> {resumo.itensContados}</p>
         </div>
       </div>
 
       <div className="card">
-        <h2>Top 10 itens divergentes</h2>
+        <h2>Top 10 Itens Divergentes</h2>
 
         {top10Divergentes.length === 0 && <p>Nenhuma divergência encontrada.</p>}
 
         {top10Divergentes.map((item) => (
-          <div key={item.item_id} className="dashboard-row">
+          <div key={`${item.posicao}-${item.sku}`} className="dashboard-row">
             <strong>{item.sku}</strong> - {item.descricao}
             <p>Posição: {item.posicao}</p>
             <p>
