@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import api from "./services/api"
 import AuthPage from "./pages/AuthPage"
 import DashboardPage from "./pages/DashboardPage"
@@ -20,6 +20,9 @@ function InventoryPage() {
   const [uploadFile, setUploadFile] = useState(null)
   const [message, setMessage] = useState("")
   const [loadingUpload, setLoadingUpload] = useState(false)
+
+  const [statusFilter, setStatusFilter] = useState("todos")
+  const [positionFilter, setPositionFilter] = useState("")
 
   const apiBaseUrl = import.meta.env.VITE_API_URL
   const backendBaseUrl = apiBaseUrl.replace(/\/inventory$/, "")
@@ -179,11 +182,29 @@ function InventoryPage() {
     window.open(url, "_blank")
   }
 
+  function clearFilters() {
+    setStatusFilter("todos")
+    setPositionFilter("")
+  }
+
   function logout() {
     localStorage.removeItem("inventory_user")
     localStorage.removeItem("inventory_token")
     window.location.href = "/login"
   }
+
+  const filteredPositions = useMemo(() => {
+    return positions.filter((position) => {
+      const matchesStatus =
+        statusFilter === "todos" ? true : position.status === statusFilter
+
+      const matchesPosition = String(position.codigo || "")
+        .toLowerCase()
+        .includes(positionFilter.trim().toLowerCase())
+
+      return matchesStatus && matchesPosition
+    })
+  }, [positions, statusFilter, positionFilter])
 
   useEffect(() => {
     loadPositions()
@@ -240,12 +261,50 @@ function InventoryPage() {
         </div>
       </div>
 
+      <div className="card">
+        <h2>Filtros de posições</h2>
+
+        <label>Status</label>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="filter-select"
+        >
+          <option value="todos">Todos</option>
+          <option value="pendente">Pendente</option>
+          <option value="contando">Contando</option>
+          <option value="recontagem">Recontagem</option>
+          <option value="finalizado">Finalizado</option>
+        </select>
+
+        <label>Filtrar posição</label>
+        <input
+          type="text"
+          placeholder="Ex.: K.01.4"
+          value={positionFilter}
+          onChange={(e) => setPositionFilter(e.target.value)}
+        />
+
+        <div className="actions">
+          <button onClick={clearFilters}>Limpar filtros</button>
+        </div>
+      </div>
+
       {message && <p className="message">{message}</p>}
 
       <div className="card">
-        <h2>Posições</h2>
+        <div className="top-bar">
+          <h2>Posições</h2>
+          <span>
+            <strong>{filteredPositions.length}</strong> resultado(s)
+          </span>
+        </div>
 
-        {positions.map((position) => (
+        {filteredPositions.length === 0 && (
+          <p>Nenhuma posição encontrada com os filtros aplicados.</p>
+        )}
+
+        {filteredPositions.map((position) => (
           <div key={position.id} className="position-row">
             <div>
               <strong>{position.codigo}</strong>
