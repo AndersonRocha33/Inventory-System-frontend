@@ -5,8 +5,8 @@ import "../index.css"
 function MobileCountPage() {
   const [position, setPosition] = useState(null)
   const [items, setItems] = useState([])
+  const [savedItems, setSavedItems] = useState([])
   const [counts, setCounts] = useState({})
-  const [savedItems, setSavedItems] = useState({})
   const [extraItem, setExtraItem] = useState({
     sku: "",
     descricao: "",
@@ -21,27 +21,40 @@ function MobileCountPage() {
 
   async function loadPositionData() {
     try {
-      const positionsResponse = await api.get(`/${inventarioId}/positions`)
+      const positionsResponse = await api.get(`/${inventarioId}/positions`, {
+        params: { operador }
+      })
+
       const currentPosition = positionsResponse.data.find(
         (p) => String(p.id) === String(positionId)
       )
 
       if (!currentPosition) {
-        setMessage("Posição não encontrada")
+        setMessage("Posição não encontrada ou indisponível para este operador")
         return
       }
 
       setPosition(currentPosition)
 
+      const savedResponse = await api.get(`/positions/${positionId}/saved-items`)
+      const saved = savedResponse.data
+      setSavedItems(saved)
+
+      let activeResponse
+
       if (Number(currentPosition.fase_atual || 1) > 1) {
-        const divergentResponse = await api.get(
-          `/positions/${positionId}/divergent-items`
-        )
-        setItems(divergentResponse.data)
+        activeResponse = await api.get(`/positions/${positionId}/divergent-items`)
       } else {
-        const itemsResponse = await api.get(`/positions/${positionId}/items`)
-        setItems(itemsResponse.data)
+        activeResponse = await api.get(`/positions/${positionId}/items`)
       }
+
+      const savedIds = new Set(saved.map((item) => String(item.id)))
+
+      const activeItems = activeResponse.data.filter(
+        (item) => !savedIds.has(String(item.id))
+      )
+
+      setItems(activeItems)
     } catch (error) {
       console.error(error)
       setMessage(
@@ -60,10 +73,20 @@ function MobileCountPage() {
         quantidade: Number(counts[itemId] || 0)
       })
 
-      setSavedItems((prev) => ({
-        ...prev,
-        [itemId]: true
-      }))
+      const savedItem = items.find((item) => item.id === itemId)
+
+      if (savedItem) {
+        setSavedItems((prev) => [
+          ...prev,
+          {
+            ...savedItem,
+            quantidade_contada: Number(counts[itemId] || 0),
+            operador
+          }
+        ])
+
+        setItems((prev) => prev.filter((item) => item.id !== itemId))
+      }
 
       setMessage("Contagem registrada")
       return true
@@ -79,18 +102,19 @@ function MobileCountPage() {
     }
   }
 
-  async function registerCountAndNext(itemId, index) {
-    const success = await registerCount(itemId)
+  async function registerCountAndNext(itemId) {
+    await registerCount(itemId)
+  }
 
-    if (!success) return
+  function editSavedItem(item) {
+    setCounts((prev) => ({
+      ...prev,
+      [item.id]: item.quantidade_contada
+    }))
 
-    const nextIndex = index + 1
-    if (items[nextIndex]) {
-      const nextElement = document.getElementById(`count-input-${items[nextIndex].id}`)
-      if (nextElement) {
-        nextElement.focus()
-      }
-    }
+    setItems((prev) => [item, ...prev])
+    setSavedItems((prev) => prev.filter((saved) => saved.id !== item.id))
+    setMessage("Item liberado para edição")
   }
 
   async function addExtraItem() {
@@ -154,8 +178,8 @@ function MobileCountPage() {
   }
 
   const progress = useMemo(() => {
-    const total = items.length
-    const done = Object.keys(savedItems).length
+    const total = items.length + savedItems.length
+    const done = savedItems.length
     const percent = total > 0 ? Math.round((done / total) * 100) : 0
 
     return { total, done, percent }
@@ -186,46 +210,37 @@ function MobileCountPage() {
         </div>
 
         <h1>Contagem da Posição</h1>
-        <p>
-          <strong>Posição:</strong> {position.codigo}
-        </p>
-        <p>
-          <strong>Operador:</strong> {operador}
-        </p>
-        <p>
-          <strong>Fase:</strong> {position.fase_atual}
-        </p>
+        <p><strong>Posição:</strong> {position.codigo}</p>
+        <p><strong>Operador:</strong> {operador}</p>
+        <p><strong>Fase:</strong> {position.fase_atual}</p>
 
         {Number(position.fase_atual || 1) > 1 && (
-          <p>
-            <strong>Modo:</strong> exibindo apenas itens divergentes
-          </p>
+          <p><strong>Modo:</strong> exibindo apenas itens divergentes</p>
         )}
 
         <p>
           <strong>Progresso:</strong> {progress.done} de {progress.total}
         </p>
+
         <div className="progress-bar">
           <div
             className="progress-fill"
             style={{ width: `${progress.percent}%` }}
           />
         </div>
+
         <p>{progress.percent}%</p>
       </div>
 
       {message && <p className="message">{message}</p>}
 
       <div className="card">
-        <h2>Itens</h2>
+        <h2>Itens pendentes</h2>
 
-        {items.length === 0 && <p>Nenhum item para contar.</p>}
+        {items.length === 0 && <p>Nenhum item pendente para contar.</p>}
 
-        {items.map((item, index) => (
-          <div
-            key={item.id}
-            className={`mobile-item-card ${savedItems[item.id] ? "mobile-item-saved" : ""}`}
-          >
+        {items.map((item) => (
+          <div key={item.id} className="mobile-item-card">
             <div className="mobile-item-info">
               <strong>{item.sku}</strong>
               <p>{item.descricao}</p>
@@ -247,10 +262,30 @@ function MobileCountPage() {
 
             <div className="mobile-item-actions">
               <button onClick={() => registerCount(item.id)}>Salvar</button>
-              <button onClick={() => registerCountAndNext(item.id, index)}>
+              <button onClick={() => registerCountAndNext(item.id)}>
                 Salvar e próximo
               </button>
             </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <h2>Itens salvos</h2>
+
+        {savedItems.length === 0 && <p>Nenhum item salvo ainda.</p>}
+
+        {savedItems.map((item) => (
+          <div key={item.id} className="mobile-item-card mobile-item-saved">
+            <div className="mobile-item-info">
+              <strong>{item.sku}</strong>
+              <p>{item.descricao}</p>
+              <p>
+                <strong>Qtd salva:</strong> {item.quantidade_contada}
+              </p>
+            </div>
+
+            <button onClick={() => editSavedItem(item)}>Editar</button>
           </div>
         ))}
       </div>

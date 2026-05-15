@@ -29,7 +29,11 @@ function InventoryPage() {
 
   async function loadPositions() {
     try {
-      const response = await api.get(`/${inventarioId}/positions`)
+      const response = await api.get(`/${inventarioId}/positions`, {
+        params: {
+          operador: operator || undefined
+        }
+      })
       setPositions(response.data)
     } catch (error) {
       console.error("Erro ao carregar posições:", error)
@@ -50,7 +54,11 @@ function InventoryPage() {
 
   async function loadPositionsById(id) {
     try {
-      const response = await api.get(`/${id}/positions`)
+      const response = await api.get(`/${id}/positions`, {
+        params: {
+          operador: operator || undefined
+        }
+      })
       setPositions(response.data)
     } catch (error) {
       console.error("Erro ao carregar posições por id:", error)
