@@ -466,4 +466,13 @@ button:disabled {
   .mobile-page h2 {
     font-size: 22px;
   }
+
+  .danger-button {
+  background: var(--spot-danger);
+  color: #ffffff;
+}
+
+.danger-button:hover {
+  background: #dc2626;
+}
 }
