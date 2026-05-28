@@ -8,28 +8,28 @@ import "./index.css"
 
 function formatDate(value) {
   if (!value) return "-"
+  return new Date(value).toLocaleDateString("pt-BR")
+}
 
-  const date = new Date(value)
+function getStatusLabel(status) {
+  const labels = {
+    pendente: "Pendente",
+    contando: "Em contagem",
+    recontagem: "Recontagem",
+    finalizado: "Finalizado"
+  }
 
-  return date.toLocaleDateString("pt-BR")
+  return labels[status] || status
 }
 
 function InventoryPage() {
   const params = new URLSearchParams(window.location.search)
+  const loggedUser = JSON.parse(localStorage.getItem("inventory_user") || "null")
 
-  const loggedUser = JSON.parse(
-    localStorage.getItem("inventory_user") || "null"
-  )
-
-  const [inventarioId, setInventarioId] = useState(
-    params.get("inventarioId") || ""
-  )
-
+  const [inventarioId, setInventarioId] = useState(params.get("inventarioId") || "")
   const [inventories, setInventories] = useState([])
   const [positions, setPositions] = useState([])
-  const [operator, setOperator] = useState(
-    params.get("operador") || loggedUser?.nome || ""
-  )
+  const [operator, setOperator] = useState(params.get("operador") || loggedUser?.nome || "")
 
   const [uploadFile, setUploadFile] = useState(null)
   const [dataInventario, setDataInventario] = useState("")
@@ -45,14 +45,12 @@ function InventoryPage() {
   async function loadInventories() {
     try {
       const response = await api.get("/")
-
       setInventories(response.data)
 
       if (!inventarioId && response.data.length > 0) {
         setInventarioId(response.data[0].id)
       }
-    } catch (error) {
-      console.error(error)
+    } catch {
       setMessage("Erro ao carregar inventários")
     }
   }
@@ -62,7 +60,6 @@ function InventoryPage() {
 
     try {
       const response = await api.get(`/${id}/positions`)
-
       setPositions(response.data)
     } catch (error) {
       if (error.response?.status === 401) {
@@ -95,20 +92,15 @@ function InventoryPage() {
       setMessage("Enviando arquivo... aguarde")
 
       const formData = new FormData()
-
       formData.append("file", uploadFile)
       formData.append("dataInventario", dataInventario)
 
       const response = await api.post("/upload", formData)
-
       const novoInventarioId = response.data.inventarioId
 
       setInventarioId(novoInventarioId)
-
       setMessage(
-        `Upload concluído. Inventário de ${formatDate(
-          dataInventario
-        )} criado com ${response.data.totalPosicoes} posições.`
+        `Inventário de ${formatDate(dataInventario)} criado com ${response.data.totalPosicoes} posições.`
       )
 
       await loadInventories()
@@ -134,7 +126,6 @@ function InventoryPage() {
     if (position.primeiro_operador === operator) return 1
     if (position.segundo_operador === operator) return 2
     if (position.terceiro_operador === operator) return 3
-
     return position.fase_atual || 1
   }
 
@@ -166,10 +157,7 @@ function InventoryPage() {
         return
       }
 
-      if (
-        position.status === "contando" &&
-        position.operador_atual === operator
-      ) {
+      if (position.status === "contando" && position.operador_atual === operator) {
         window.location.href = `/count?mode=count&positionId=${position.id}&inventarioId=${inventarioId}&operador=${encodeURIComponent(
           operator
         )}`
@@ -206,15 +194,12 @@ function InventoryPage() {
     }
 
     const url = `${window.location.origin}/?inventarioId=${inventarioId}`
-
     navigator.clipboard.writeText(url)
-
     setMessage("Link do inventário copiado.")
   }
 
   function exportCsv() {
     const token = localStorage.getItem("inventory_token")
-
     const url = `${backendBaseUrl}/inventory/${inventarioId}/export`
 
     fetch(url, {
@@ -225,33 +210,22 @@ function InventoryPage() {
       .then((response) => response.blob())
       .then((blob) => {
         const downloadUrl = window.URL.createObjectURL(blob)
-
         const a = document.createElement("a")
-
         a.href = downloadUrl
         a.download = "inventario.csv"
-
         document.body.appendChild(a)
-
         a.click()
-
         a.remove()
       })
       .catch(() => setMessage("Erro ao exportar CSV"))
   }
 
   function openDashboard() {
-    window.open(
-      `${window.location.origin}/dashboard?inventarioId=${inventarioId}`,
-      "_blank"
-    )
+    window.open(`${window.location.origin}/dashboard?inventarioId=${inventarioId}`, "_blank")
   }
 
   function openHistoryReport() {
-    window.open(
-      `${window.location.origin}/history-report?inventarioId=${inventarioId}`,
-      "_blank"
-    )
+    window.open(`${window.location.origin}/history-report?inventarioId=${inventarioId}`, "_blank")
   }
 
   async function finishSelectedInventory() {
@@ -260,17 +234,12 @@ function InventoryPage() {
       return
     }
 
-    const confirmed = window.confirm(
-      "Deseja finalizar este inventário?"
-    )
-
+    const confirmed = window.confirm("Deseja finalizar este inventário?")
     if (!confirmed) return
 
     try {
       await api.post(`/${inventarioId}/finish`)
-
       setMessage("Inventário finalizado e arquivado")
-
       await loadInventories()
       await loadPositions()
     } catch (error) {
@@ -289,20 +258,14 @@ function InventoryPage() {
       return
     }
 
-    const confirmed = window.confirm(
-      "Deseja realmente excluir este inventário?"
-    )
-
+    const confirmed = window.confirm("Deseja realmente excluir este inventário?")
     if (!confirmed) return
 
     try {
       await api.delete(`/${inventarioId}`)
-
       setMessage("Inventário excluído")
-
       setInventarioId("")
       setPositions([])
-
       await loadInventories()
     } catch (error) {
       setMessage(
@@ -322,7 +285,6 @@ function InventoryPage() {
   function logout() {
     localStorage.removeItem("inventory_user")
     localStorage.removeItem("inventory_token")
-
     window.location.href = "/login"
   }
 
@@ -330,12 +292,26 @@ function InventoryPage() {
     (inventory) => String(inventory.id) === String(inventarioId)
   )
 
+  const stats = useMemo(() => {
+    const total = positions.length
+    const pendente = positions.filter((p) => p.status === "pendente").length
+    const contando = positions.filter((p) => p.status === "contando").length
+    const recontagem = positions.filter((p) => p.status === "recontagem").length
+    const finalizado = positions.filter((p) => p.status === "finalizado").length
+
+    return {
+      total,
+      pendente,
+      contando,
+      recontagem,
+      finalizado
+    }
+  }, [positions])
+
   const filteredPositions = useMemo(() => {
     return positions.filter((position) => {
       const matchesStatus =
-        statusFilter === "todos"
-          ? true
-          : position.status === statusFilter
+        statusFilter === "todos" ? true : position.status === statusFilter
 
       const matchesPosition = String(position.codigo || "")
         .toLowerCase()
@@ -354,264 +330,269 @@ function InventoryPage() {
   }, [inventarioId])
 
   return (
-    <div className="container">
-      <h1>Sistema de Inventário</h1>
-
-      <div className="card">
-        <div className="top-bar">
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-icon">✓</div>
           <div>
-            <strong>Usuário:</strong> {loggedUser?.nome || "-"}
+            <h1>SpotInventory</h1>
+            <p>Inventário operacional</p>
+          </div>
+        </div>
+
+        <div className="sidebar-user">
+          <span>Usuário logado</span>
+          <strong>{loggedUser?.nome || "-"}</strong>
+        </div>
+
+        <nav className="sidebar-actions">
+          <button onClick={() => loadPositions()}>Atualizar posições</button>
+          <button onClick={openDashboard}>Dashboard</button>
+          <button onClick={openHistoryReport}>Histórico</button>
+          <button onClick={exportCsv}>Exportar CSV</button>
+          <button onClick={logout} className="secondary-button">
+            Sair
+          </button>
+        </nav>
+      </aside>
+
+      <main className="main-content">
+        <header className="app-header">
+          <div>
+            <p className="eyebrow">Sistema de inventário</p>
+            <h2>Controle de posições</h2>
+            <span>
+              Selecione o inventário, compartilhe com os operadores e acompanhe a contagem em tempo real.
+            </span>
           </div>
 
-          <button onClick={logout}>Sair</button>
-        </div>
-      </div>
+          <button onClick={copyShareLink}>Compartilhar inventário</button>
+        </header>
 
-      <div className="card">
-        <h2>Novo inventário</h2>
+        {message && <div className="toast-message">{message}</div>}
 
-        <label>Data do inventário</label>
+        <section className="summary-grid">
+          <div className="summary-card">
+            <span>Total</span>
+            <strong>{stats.total}</strong>
+            <p>posições</p>
+          </div>
 
-        <input
-          type="date"
-          value={dataInventario}
-          onChange={(e) => setDataInventario(e.target.value)}
-        />
+          <div className="summary-card">
+            <span>Pendentes</span>
+            <strong>{stats.pendente}</strong>
+            <p>aguardando</p>
+          </div>
 
-        <label>Arquivo CSV</label>
+          <div className="summary-card">
+            <span>Em contagem</span>
+            <strong>{stats.contando}</strong>
+            <p>em andamento</p>
+          </div>
 
-        <input
-          type="file"
-          accept=".csv"
-          onChange={(e) => setUploadFile(e.target.files[0])}
-        />
+          <div className="summary-card">
+            <span>Recontagem</span>
+            <strong>{stats.recontagem}</strong>
+            <p>com divergência</p>
+          </div>
 
-        <button
-          onClick={uploadInventoryFile}
-          disabled={loadingUpload}
-        >
-          {loadingUpload
-            ? "Enviando..."
-            : "Criar inventário"}
-        </button>
-      </div>
+          <div className="summary-card">
+            <span>Finalizadas</span>
+            <strong>{stats.finalizado}</strong>
+            <p>concluídas</p>
+          </div>
+        </section>
 
-      <div className="card">
-        <h2>Selecionar inventário</h2>
-
-        <label>Inventário</label>
-
-        <select
-          value={inventarioId}
-          onChange={(e) => setInventarioId(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">Selecione</option>
-
-          {inventories.map((inventory) => (
-            <option
-              key={inventory.id}
-              value={inventory.id}
-            >
-              {formatDate(inventory.data_inicio)} -{" "}
-              {inventory.deposito || "-"} - ID {inventory.id}
-            </option>
-          ))}
-        </select>
-
-        {selectedInventory && (
-          <p>
-            <strong>Selecionado:</strong>{" "}
-            {formatDate(selectedInventory.data_inicio)}
-          </p>
-        )}
-
-        <label>Operador</label>
-
-        <input
-          type="text"
-          placeholder="Digite o operador"
-          value={operator}
-          onChange={(e) => setOperator(e.target.value)}
-        />
-
-        <div className="actions">
-          <button onClick={() => loadPositions()}>
-            Carregar posições
-          </button>
-
-          <button onClick={copyShareLink}>
-            Compartilhar inventário
-          </button>
-
-          <button onClick={openDashboard}>
-            Dashboard
-          </button>
-
-          <button onClick={openHistoryReport}>
-            Relatório histórico
-          </button>
-
-          <button onClick={exportCsv}>
-            Exportar CSV
-          </button>
-
-          <button onClick={finishSelectedInventory}>
-            Finalizar inventário
-          </button>
-
-          <button
-            onClick={deleteSelectedInventory}
-            className="danger-button"
-          >
-            Excluir inventário
-          </button>
-        </div>
-      </div>
-
-      <div className="card">
-        <h2>Filtros</h2>
-
-        <label>Status</label>
-
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="filter-select"
-        >
-          <option value="todos">Todos</option>
-          <option value="pendente">Pendente</option>
-          <option value="contando">Contando</option>
-          <option value="recontagem">Recontagem</option>
-          <option value="finalizado">Finalizado</option>
-        </select>
-
-        <label>Posição</label>
-
-        <input
-          type="text"
-          placeholder="Ex.: K.01.4"
-          value={positionFilter}
-          onChange={(e) => setPositionFilter(e.target.value)}
-        />
-
-        <button onClick={clearFilters}>
-          Limpar filtros
-        </button>
-      </div>
-
-      {message && (
-        <p className="message">{message}</p>
-      )}
-
-      <div className="card">
-        <div className="top-bar">
-          <h2>Posições</h2>
-
-          <span>
-            <strong>
-              {filteredPositions.length}
-            </strong>{" "}
-            resultado(s)
-          </span>
-        </div>
-
-        {filteredPositions.map((position) => {
-          const alreadyCounted =
-            operatorAlreadyCounted(position)
-
-          const isRecount =
-            position.status === "recontagem"
-
-          return (
-            <div
-              key={position.id}
-              className="position-row"
-            >
+        <section className="content-grid">
+          <div className="panel">
+            <div className="panel-header">
               <div>
-                <strong>{position.codigo}</strong>
-
-                <p>Status: {position.status}</p>
-
-                <p>
-                  Fase atual: {position.fase_atual}
-                </p>
-
-                <p>
-                  1º contador:{" "}
-                  {position.primeiro_operador || "-"}
-                </p>
-
-                <p>
-                  2º contador:{" "}
-                  {position.segundo_operador || "-"}
-                </p>
-
-                <p>
-                  3º contador:{" "}
-                  {position.terceiro_operador || "-"}
-                </p>
+                <h3>Novo inventário</h3>
+                <p>Carregue o CSV e informe a data de realização.</p>
               </div>
+            </div>
 
-              <button
-                onClick={() =>
-                  openCountPage(position)
-                }
-                disabled={
-                  !operator ||
-                  (position.status === "contando" &&
-                    position.operador_atual &&
-                    position.operador_atual !==
-                      operator)
-                }
-              >
-                {alreadyCounted && isRecount
-                  ? "Revisar posição"
-                  : Number(
-                      position.fase_atual || 1
-                    ) > 1
-                  ? "Abrir recontagem"
-                  : position.status === "finalizado"
-                  ? "Revisar posição"
-                  : "Abrir contagem"}
+            <label>Data do inventário</label>
+            <input
+              type="date"
+              value={dataInventario}
+              onChange={(e) => setDataInventario(e.target.value)}
+            />
+
+            <label>Arquivo CSV</label>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) => setUploadFile(e.target.files[0])}
+            />
+
+            <button onClick={uploadInventoryFile} disabled={loadingUpload}>
+              {loadingUpload ? "Enviando..." : "Criar inventário"}
+            </button>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h3>Inventário ativo</h3>
+                <p>Escolha o inventário que será trabalhado.</p>
+              </div>
+            </div>
+
+            <label>Inventário</label>
+            <select
+              value={inventarioId}
+              onChange={(e) => setInventarioId(e.target.value)}
+              className="filter-select"
+            >
+              <option value="">Selecione</option>
+
+              {inventories.map((inventory) => (
+                <option key={inventory.id} value={inventory.id}>
+                  {formatDate(inventory.data_inicio)} - {inventory.deposito || "-"} - ID {inventory.id}
+                </option>
+              ))}
+            </select>
+
+            {selectedInventory && (
+              <div className="selected-inventory">
+                <span>Selecionado</span>
+                <strong>{formatDate(selectedInventory.data_inicio)}</strong>
+                <p>{selectedInventory.deposito || "Sem depósito"}</p>
+              </div>
+            )}
+
+            <label>Operador</label>
+            <input
+              type="text"
+              placeholder="Digite o operador"
+              value={operator}
+              onChange={(e) => setOperator(e.target.value)}
+            />
+
+            <div className="action-grid">
+              <button onClick={finishSelectedInventory}>Finalizar</button>
+              <button onClick={deleteSelectedInventory} className="danger-button">
+                Excluir
               </button>
             </div>
-          )
-        })}
-      </div>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <h3>Filtros</h3>
+              <p>Encontre rapidamente a posição para contagem.</p>
+            </div>
+
+            <button onClick={clearFilters} className="secondary-button">
+              Limpar
+            </button>
+          </div>
+
+          <div className="filters-row">
+            <div>
+              <label>Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="todos">Todos</option>
+                <option value="pendente">Pendente</option>
+                <option value="contando">Contando</option>
+                <option value="recontagem">Recontagem</option>
+                <option value="finalizado">Finalizado</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Posição</label>
+              <input
+                type="text"
+                placeholder="Ex.: K.01.4"
+                value={positionFilter}
+                onChange={(e) => setPositionFilter(e.target.value)}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <h3>Posições</h3>
+              <p>{filteredPositions.length} resultado(s) encontrados.</p>
+            </div>
+          </div>
+
+          <div className="positions-grid">
+            {filteredPositions.map((position) => {
+              const alreadyCounted = operatorAlreadyCounted(position)
+              const isRecount = position.status === "recontagem"
+              const isLockedByOther =
+                position.status === "contando" &&
+                position.operador_atual &&
+                position.operador_atual !== operator
+
+              return (
+                <div key={position.id} className="position-card">
+                  <div className="position-card-top">
+                    <div>
+                      <strong>{position.codigo}</strong>
+                      <span className={`status-badge status-${position.status}`}>
+                        {getStatusLabel(position.status)}
+                      </span>
+                    </div>
+
+                    <span className="phase-pill">Fase {position.fase_atual}</span>
+                  </div>
+
+                  <div className="position-meta">
+                    <p>1º contador: {position.primeiro_operador || "-"}</p>
+                    <p>2º contador: {position.segundo_operador || "-"}</p>
+                    <p>3º contador: {position.terceiro_operador || "-"}</p>
+                  </div>
+
+                  {isLockedByOther && (
+                    <div className="locked-info">
+                      Em uso por {position.operador_atual}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => openCountPage(position)}
+                    disabled={!operator || isLockedByOther}
+                  >
+                    {alreadyCounted && isRecount
+                      ? "Revisar posição"
+                      : Number(position.fase_atual || 1) > 1
+                      ? "Abrir recontagem"
+                      : position.status === "finalizado"
+                      ? "Revisar posição"
+                      : position.status === "contando" && position.operador_atual === operator
+                      ? "Continuar contagem"
+                      : "Abrir contagem"}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      </main>
     </div>
   )
 }
 
 function App() {
-  const loggedUser = JSON.parse(
-    localStorage.getItem("inventory_user") || "null"
-  )
+  const loggedUser = JSON.parse(localStorage.getItem("inventory_user") || "null")
 
-  if (
-    !loggedUser &&
-    window.location.pathname !== "/login"
-  ) {
-    return <AuthPage />
-  }
-
-  if (window.location.pathname === "/login") {
-    return <AuthPage />
-  }
-
-  if (window.location.pathname === "/dashboard") {
-    return <DashboardPage />
-  }
-
-  if (
-    window.location.pathname === "/history-report"
-  ) {
-    return <HistoryReportPage />
-  }
-
-  if (window.location.pathname === "/count") {
-    return <MobileCountPage />
-  }
+  if (!loggedUser && window.location.pathname !== "/login") return <AuthPage />
+  if (window.location.pathname === "/login") return <AuthPage />
+  if (window.location.pathname === "/dashboard") return <DashboardPage />
+  if (window.location.pathname === "/history-report") return <HistoryReportPage />
+  if (window.location.pathname === "/count") return <MobileCountPage />
 
   return <InventoryPage />
 }
