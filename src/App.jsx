@@ -10,13 +10,9 @@ function InventoryPage() {
   const params = new URLSearchParams(window.location.search)
   const loggedUser = JSON.parse(localStorage.getItem("inventory_user") || "null")
 
-  const [inventarioId, setInventarioId] = useState(
-    params.get("inventarioId") || 1
-  )
+  const [inventarioId, setInventarioId] = useState(params.get("inventarioId") || 1)
   const [positions, setPositions] = useState([])
-  const [operator, setOperator] = useState(
-    params.get("operador") || loggedUser?.nome || ""
-  )
+  const [operator, setOperator] = useState(params.get("operador") || loggedUser?.nome || "")
   const [uploadFile, setUploadFile] = useState(null)
   const [message, setMessage] = useState("")
   const [loadingUpload, setLoadingUpload] = useState(false)
@@ -29,15 +25,9 @@ function InventoryPage() {
 
   async function loadPositions() {
     try {
-      const response = await api.get(`/${inventarioId}/positions`, {
-        params: {
-          operador: operator || undefined
-        }
-      })
+      const response = await api.get(`/${inventarioId}/positions`)
       setPositions(response.data)
     } catch (error) {
-      console.error("Erro ao carregar posições:", error)
-
       if (error.response?.status === 401) {
         logout()
         return
@@ -54,15 +44,9 @@ function InventoryPage() {
 
   async function loadPositionsById(id) {
     try {
-      const response = await api.get(`/${id}/positions`, {
-        params: {
-          operador: operator || undefined
-        }
-      })
+      const response = await api.get(`/${id}/positions`)
       setPositions(response.data)
     } catch (error) {
-      console.error("Erro ao carregar posições por id:", error)
-
       if (error.response?.status === 401) {
         logout()
         return
@@ -101,15 +85,8 @@ function InventoryPage() {
 
       await loadPositionsById(novoInventarioId)
     } catch (error) {
-      console.error("Erro completo no upload:", error)
-
       if (error.response?.status === 401) {
         logout()
-        return
-      }
-
-      if (!error.response) {
-        setMessage("Erro de rede. Verifique se o backend publicado está online.")
         return
       }
 
@@ -124,6 +101,21 @@ function InventoryPage() {
     }
   }
 
+  function getReviewPhase(position) {
+    if (position.primeiro_operador === operator) return 1
+    if (position.segundo_operador === operator) return 2
+    if (position.terceiro_operador === operator) return 3
+    return position.fase_atual || 1
+  }
+
+  function operatorAlreadyCounted(position) {
+    return (
+      position.primeiro_operador === operator ||
+      position.segundo_operador === operator ||
+      position.terceiro_operador === operator
+    )
+  }
+
   async function openCountPage(position) {
     try {
       if (!operator || !operator.trim()) {
@@ -131,16 +123,27 @@ function InventoryPage() {
         return
       }
 
+      const alreadyCounted = operatorAlreadyCounted(position)
+      const isRecount = position.status === "recontagem"
+
+      if (alreadyCounted && isRecount) {
+        const reviewPhase = getReviewPhase(position)
+
+        window.location.href = `/count?mode=review&positionId=${position.id}&inventarioId=${inventarioId}&operador=${encodeURIComponent(
+          operator
+        )}&reviewPhase=${reviewPhase}`
+
+        return
+      }
+
       await api.post(`/positions/${position.id}/start`, {
         operador: operator
       })
 
-      window.location.href = `/count?positionId=${position.id}&inventarioId=${inventarioId}&operador=${encodeURIComponent(
+      window.location.href = `/count?mode=count&positionId=${position.id}&inventarioId=${inventarioId}&operador=${encodeURIComponent(
         operator
       )}`
     } catch (error) {
-      console.error("Erro ao iniciar contagem:", error)
-
       if (error.response?.status === 401) {
         logout()
         return
@@ -174,20 +177,15 @@ function InventoryPage() {
         a.click()
         a.remove()
       })
-      .catch((error) => {
-        console.error(error)
-        setMessage("Erro ao exportar CSV")
-      })
+      .catch(() => setMessage("Erro ao exportar CSV"))
   }
 
   function openDashboard() {
-    const url = `${window.location.origin}/dashboard?inventarioId=${inventarioId}`
-    window.open(url, "_blank")
+    window.open(`${window.location.origin}/dashboard?inventarioId=${inventarioId}`, "_blank")
   }
 
   function openHistoryReport() {
-    const url = `${window.location.origin}/history-report?inventarioId=${inventarioId}`
-    window.open(url, "_blank")
+    window.open(`${window.location.origin}/history-report?inventarioId=${inventarioId}`, "_blank")
   }
 
   function clearFilters() {
@@ -246,7 +244,7 @@ function InventoryPage() {
       </div>
 
       <div className="card">
-        <label>Inventário ID</label>
+        <label>Inventário</label>
         <input
           type="number"
           value={inventarioId}
@@ -263,14 +261,14 @@ function InventoryPage() {
 
         <div className="actions">
           <button onClick={loadPositions}>Carregar posições</button>
-          <button onClick={openDashboard}>Dashboard de acuracidade</button>
+          <button onClick={openDashboard}>Dashboard</button>
           <button onClick={openHistoryReport}>Relatório histórico</button>
           <button onClick={exportCsv}>Exportar CSV</button>
         </div>
       </div>
 
       <div className="card">
-        <h2>Filtros de posições</h2>
+        <h2>Filtros</h2>
 
         <label>Status</label>
         <select
@@ -285,7 +283,7 @@ function InventoryPage() {
           <option value="finalizado">Finalizado</option>
         </select>
 
-        <label>Filtrar posição</label>
+        <label>Posição</label>
         <input
           type="text"
           placeholder="Ex.: K.01.4"
@@ -293,9 +291,7 @@ function InventoryPage() {
           onChange={(e) => setPositionFilter(e.target.value)}
         />
 
-        <div className="actions">
-          <button onClick={clearFilters}>Limpar filtros</button>
-        </div>
+        <button onClick={clearFilters}>Limpar filtros</button>
       </div>
 
       {message && <p className="message">{message}</p>}
@@ -308,35 +304,36 @@ function InventoryPage() {
           </span>
         </div>
 
-        {filteredPositions.length === 0 && (
-          <p>Nenhuma posição encontrada com os filtros aplicados.</p>
-        )}
+        {filteredPositions.map((position) => {
+          const alreadyCounted = operatorAlreadyCounted(position)
+          const isRecount = position.status === "recontagem"
 
-        {filteredPositions.map((position) => (
-          <div key={position.id} className="position-row">
-            <div>
-              <strong>{position.codigo}</strong>
-              <p>Status: {position.status}</p>
-              <p>Fase atual: {position.fase_atual}</p>
-              <p>1º contador: {position.primeiro_operador || "-"}</p>
-              <p>2º contador: {position.segundo_operador || "-"}</p>
-              <p>3º contador: {position.terceiro_operador || "-"}</p>
+          return (
+            <div key={position.id} className="position-row">
+              <div>
+                <strong>{position.codigo}</strong>
+                <p>Status: {position.status}</p>
+                <p>Fase atual: {position.fase_atual}</p>
+                <p>1º contador: {position.primeiro_operador || "-"}</p>
+                <p>2º contador: {position.segundo_operador || "-"}</p>
+                <p>3º contador: {position.terceiro_operador || "-"}</p>
+              </div>
+
+              <button
+                onClick={() => openCountPage(position)}
+                disabled={!operator || position.status === "contando"}
+              >
+                {alreadyCounted && isRecount
+                  ? "Revisar posição"
+                  : Number(position.fase_atual || 1) > 1
+                  ? "Abrir recontagem"
+                  : position.status === "finalizado"
+                  ? "Revisar posição"
+                  : "Abrir contagem"}
+              </button>
             </div>
-
-            <button
-              onClick={() => openCountPage(position)}
-              disabled={
-                !operator ||
-                position.status === "contando" ||
-                position.status === "finalizado"
-              }
-            >
-              {Number(position.fase_atual || 1) > 1
-                ? "Abrir recontagem"
-                : "Abrir contagem"}
-            </button>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -345,25 +342,11 @@ function InventoryPage() {
 function App() {
   const loggedUser = JSON.parse(localStorage.getItem("inventory_user") || "null")
 
-  if (!loggedUser && window.location.pathname !== "/login") {
-    return <AuthPage />
-  }
-
-  if (window.location.pathname === "/login") {
-    return <AuthPage />
-  }
-
-  if (window.location.pathname === "/dashboard") {
-    return <DashboardPage />
-  }
-
-  if (window.location.pathname === "/history-report") {
-    return <HistoryReportPage />
-  }
-
-  if (window.location.pathname === "/count") {
-    return <MobileCountPage />
-  }
+  if (!loggedUser && window.location.pathname !== "/login") return <AuthPage />
+  if (window.location.pathname === "/login") return <AuthPage />
+  if (window.location.pathname === "/dashboard") return <DashboardPage />
+  if (window.location.pathname === "/history-report") return <HistoryReportPage />
+  if (window.location.pathname === "/count") return <MobileCountPage />
 
   return <InventoryPage />
 }

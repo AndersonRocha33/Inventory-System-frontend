@@ -18,27 +18,42 @@ function MobileCountPage() {
   const positionId = params.get("positionId")
   const inventarioId = params.get("inventarioId") || "1"
   const operador = params.get("operador") || ""
+  const mode = params.get("mode") || "count"
+  const reviewPhase = Number(params.get("reviewPhase") || 0)
+
+  const isReviewMode = mode === "review"
 
   async function loadPositionData() {
     try {
-      const positionsResponse = await api.get(`/${inventarioId}/positions`, {
-        params: { operador }
-      })
-
+      const positionsResponse = await api.get(`/${inventarioId}/positions`)
       const currentPosition = positionsResponse.data.find(
         (p) => String(p.id) === String(positionId)
       )
 
       if (!currentPosition) {
-        setMessage("Posição não encontrada ou indisponível para este operador")
+        setMessage("Posição não encontrada")
         return
       }
 
       setPosition(currentPosition)
 
-      const savedResponse = await api.get(`/positions/${positionId}/saved-items`)
+      const faseParaSalvos = isReviewMode
+        ? reviewPhase || currentPosition.fase_atual
+        : currentPosition.fase_atual
+
+      const savedResponse = await api.get(`/positions/${positionId}/saved-items`, {
+        params: {
+          fase: faseParaSalvos
+        }
+      })
+
       const saved = savedResponse.data
       setSavedItems(saved)
+
+      if (isReviewMode) {
+        setItems([])
+        return
+      }
 
       let activeResponse
 
@@ -56,7 +71,6 @@ function MobileCountPage() {
 
       setItems(activeItems)
     } catch (error) {
-      console.error(error)
       setMessage(
         error.response?.data?.details ||
           error.response?.data?.error ||
@@ -68,9 +82,12 @@ function MobileCountPage() {
 
   async function registerCount(itemId) {
     try {
+      const faseOverride = isReviewMode ? reviewPhase : undefined
+
       await api.post(`/items/${itemId}/count`, {
         operador,
-        quantidade: Number(counts[itemId] || 0)
+        quantidade: Number(counts[itemId] || 0),
+        fase: faseOverride
       })
 
       const savedItem = items.find((item) => item.id === itemId)
@@ -81,17 +98,17 @@ function MobileCountPage() {
           {
             ...savedItem,
             quantidade_contada: Number(counts[itemId] || 0),
-            operador
+            operador,
+            fase: faseOverride
           }
         ])
 
         setItems((prev) => prev.filter((item) => item.id !== itemId))
       }
 
-      setMessage("Contagem registrada")
+      setMessage("Contagem salva")
       return true
     } catch (error) {
-      console.error(error)
       setMessage(
         error.response?.data?.details ||
           error.response?.data?.error ||
@@ -100,10 +117,6 @@ function MobileCountPage() {
       )
       return false
     }
-  }
-
-  async function registerCountAndNext(itemId) {
-    await registerCount(itemId)
   }
 
   function editSavedItem(item) {
@@ -129,15 +142,9 @@ function MobileCountPage() {
       })
 
       setMessage("Item extra adicionado")
-      setExtraItem({
-        sku: "",
-        descricao: "",
-        quantidade: ""
-      })
-
+      setExtraItem({ sku: "", descricao: "", quantidade: "" })
       await loadPositionData()
     } catch (error) {
-      console.error(error)
       setMessage(
         error.response?.data?.details ||
           error.response?.data?.error ||
@@ -150,18 +157,19 @@ function MobileCountPage() {
   async function finishPosition() {
     if (!position) return
 
+    if (isReviewMode) {
+      goBack()
+      return
+    }
+
     try {
       const response = await api.post(`/positions/${position.id}/finish`)
-
       setMessage(response.data.message || "Posição finalizada")
 
       setTimeout(() => {
-        window.location.href = `/?inventarioId=${inventarioId}&operador=${encodeURIComponent(
-          operador
-        )}`
+        goBack()
       }, 1000)
     } catch (error) {
-      console.error(error)
       setMessage(
         error.response?.data?.details ||
           error.response?.data?.error ||
@@ -181,7 +189,6 @@ function MobileCountPage() {
     const total = items.length + savedItems.length
     const done = savedItems.length
     const percent = total > 0 ? Math.round((done / total) * 100) : 0
-
     return { total, done, percent }
   }, [items, savedItems])
 
@@ -206,27 +213,29 @@ function MobileCountPage() {
       <div className="card mobile-header-card">
         <div className="mobile-header-top">
           <button onClick={goBack}>Voltar</button>
-          <button onClick={finishPosition}>Finalizar</button>
+          <button onClick={finishPosition}>
+            {isReviewMode ? "Fechar revisão" : "Finalizar"}
+          </button>
         </div>
 
-        <h1>Contagem da Posição</h1>
+        <h1>{isReviewMode ? "Revisão da Posição" : "Contagem da Posição"}</h1>
+
         <p><strong>Posição:</strong> {position.codigo}</p>
         <p><strong>Operador:</strong> {operador}</p>
-        <p><strong>Fase:</strong> {position.fase_atual}</p>
+        <p><strong>Fase:</strong> {isReviewMode ? reviewPhase : position.fase_atual}</p>
 
-        {Number(position.fase_atual || 1) > 1 && (
+        {isReviewMode && (
+          <p><strong>Modo:</strong> revisão dos itens já salvos</p>
+        )}
+
+        {!isReviewMode && Number(position.fase_atual || 1) > 1 && (
           <p><strong>Modo:</strong> exibindo apenas itens divergentes</p>
         )}
 
-        <p>
-          <strong>Progresso:</strong> {progress.done} de {progress.total}
-        </p>
+        <p><strong>Progresso:</strong> {progress.done} de {progress.total}</p>
 
         <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${progress.percent}%` }}
-          />
+          <div className="progress-fill" style={{ width: `${progress.percent}%` }} />
         </div>
 
         <p>{progress.percent}%</p>
@@ -237,7 +246,7 @@ function MobileCountPage() {
       <div className="card">
         <h2>Itens pendentes</h2>
 
-        {items.length === 0 && <p>Nenhum item pendente para contar.</p>}
+        {items.length === 0 && <p>Nenhum item pendente.</p>}
 
         {items.map((item) => (
           <div key={item.id} className="mobile-item-card">
@@ -247,7 +256,6 @@ function MobileCountPage() {
             </div>
 
             <input
-              id={`count-input-${item.id}`}
               type="number"
               inputMode="numeric"
               placeholder="Qtd física"
@@ -260,12 +268,9 @@ function MobileCountPage() {
               }
             />
 
-            <div className="mobile-item-actions">
-              <button onClick={() => registerCount(item.id)}>Salvar</button>
-              <button onClick={() => registerCountAndNext(item.id)}>
-                Salvar e próximo
-              </button>
-            </div>
+            <button onClick={() => registerCount(item.id)}>
+              Salvar
+            </button>
           </div>
         ))}
       </div>
@@ -280,58 +285,60 @@ function MobileCountPage() {
             <div className="mobile-item-info">
               <strong>{item.sku}</strong>
               <p>{item.descricao}</p>
-              <p>
-                <strong>Qtd salva:</strong> {item.quantidade_contada}
-              </p>
+              <p><strong>Qtd salva:</strong> {item.quantidade_contada}</p>
             </div>
 
-            <button onClick={() => editSavedItem(item)}>Editar</button>
+            <button onClick={() => editSavedItem(item)}>
+              Editar
+            </button>
           </div>
         ))}
       </div>
 
-      <div className="card">
-        <h2>Adicionar item a mais</h2>
+      {!isReviewMode && (
+        <div className="card">
+          <h2>Adicionar item a mais</h2>
 
-        <input
-          type="text"
-          placeholder="SKU"
-          value={extraItem.sku}
-          onChange={(e) =>
-            setExtraItem({
-              ...extraItem,
-              sku: e.target.value
-            })
-          }
-        />
+          <input
+            type="text"
+            placeholder="SKU"
+            value={extraItem.sku}
+            onChange={(e) =>
+              setExtraItem({
+                ...extraItem,
+                sku: e.target.value
+              })
+            }
+          />
 
-        <input
-          type="text"
-          placeholder="Descrição"
-          value={extraItem.descricao}
-          onChange={(e) =>
-            setExtraItem({
-              ...extraItem,
-              descricao: e.target.value
-            })
-          }
-        />
+          <input
+            type="text"
+            placeholder="Descrição"
+            value={extraItem.descricao}
+            onChange={(e) =>
+              setExtraItem({
+                ...extraItem,
+                descricao: e.target.value
+              })
+            }
+          />
 
-        <input
-          type="number"
-          inputMode="numeric"
-          placeholder="Quantidade"
-          value={extraItem.quantidade}
-          onChange={(e) =>
-            setExtraItem({
-              ...extraItem,
-              quantidade: e.target.value
-            })
-          }
-        />
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder="Quantidade"
+            value={extraItem.quantidade}
+            onChange={(e) =>
+              setExtraItem({
+                ...extraItem,
+                quantidade: e.target.value
+              })
+            }
+          />
 
-        <button onClick={addExtraItem}>Adicionar item extra</button>
-      </div>
+          <button onClick={addExtraItem}>Adicionar item extra</button>
+        </div>
+      )}
     </div>
   )
 }
