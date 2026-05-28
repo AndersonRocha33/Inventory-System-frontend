@@ -9,18 +9,25 @@ function DashboardPage() {
   const params = new URLSearchParams(window.location.search)
   const inventarioId = params.get("inventarioId") || "1"
 
-  useEffect(() => {
-    async function loadDashboard() {
-      try {
-        const response = await api.get(`/${inventarioId}/report`)
-        setReport(response.data)
-      } catch (err) {
-        console.error(err)
-        setError("Erro ao carregar dashboard")
-      }
+  async function loadDashboard() {
+    try {
+      const response = await api.get(`/${inventarioId}/report`)
+      setReport(response.data)
+      setError("")
+    } catch (err) {
+      console.error(err)
+      setError("Erro ao carregar dashboard")
     }
+  }
 
+  useEffect(() => {
     loadDashboard()
+
+    const interval = setInterval(() => {
+      loadDashboard()
+    }, 30000)
+
+    return () => clearInterval(interval)
   }, [inventarioId])
 
   const chartData = useMemo(() => {
@@ -66,27 +73,64 @@ function DashboardPage() {
 
   return (
     <div className="container">
-      <h1>Dashboard de Inventário</h1>
+      <div className="dashboard-title-row">
+        <div>
+          <p className="eyebrow">Gestão do inventário</p>
+          <h1>Dashboard de Inventário</h1>
+        </div>
+
+        <button onClick={loadDashboard}>Atualizar agora</button>
+      </div>
 
       <div className="dashboard-grid">
         <div className="card metric-card">
-          <h3>Acuracidade</h3>
-          <p className="metric-value">{resumo.acuracidade}%</p>
+          <h3>Acuracidade atual</h3>
+          <p className="metric-value">{resumo.acuracidadeAtual}%</p>
+          <span>Somente posições finalizadas</span>
         </div>
 
         <div className="card metric-card">
-          <h3>Total de Itens</h3>
+          <h3>Total de itens</h3>
           <p className="metric-value">{resumo.totalItens}</p>
+          <span>Grandeza total do inventário</span>
         </div>
 
         <div className="card metric-card">
-          <h3>Itens Divergentes</h3>
-          <p className="metric-value">{resumo.itensDivergentes}</p>
+          <h3>Itens contados</h3>
+          <p className="metric-value">{resumo.itensContados}</p>
+          <span>{resumo.percentualItensContados}% do total</span>
         </div>
 
         <div className="card metric-card">
-          <h3>Posições Finalizadas</h3>
+          <h3>Itens avaliados</h3>
+          <p className="metric-value">{resumo.totalItensAvaliados}</p>
+          <span>Base da acuracidade atual</span>
+        </div>
+      </div>
+
+      <div className="dashboard-grid">
+        <div className="card metric-card">
+          <h3>Itens corretos</h3>
+          <p className="metric-value">{resumo.itensCorretosAvaliados}</p>
+          <span>Nas posições finalizadas</span>
+        </div>
+
+        <div className="card metric-card">
+          <h3>Itens divergentes</h3>
+          <p className="metric-value">{resumo.itensDivergentesAvaliados}</p>
+          <span>Nas posições finalizadas</span>
+        </div>
+
+        <div className="card metric-card">
+          <h3>Posições finalizadas</h3>
           <p className="metric-value">{resumo.posicoesFinalizadas}</p>
+          <span>{resumo.percentualPosicoesContadas}% das posições</span>
+        </div>
+
+        <div className="card metric-card">
+          <h3>Total de posições</h3>
+          <p className="metric-value">{resumo.totalPosicoes}</p>
+          <span>Base operacional</span>
         </div>
       </div>
 
@@ -96,12 +140,14 @@ function DashboardPage() {
           <p>
             {resumo.itensContados} de {resumo.totalItens} itens contados
           </p>
+
           <div className="progress-bar">
             <div
               className="progress-fill"
               style={{ width: `${resumo.percentualItensContados}%` }}
             />
           </div>
+
           <p>{resumo.percentualItensContados}%</p>
         </div>
 
@@ -110,12 +156,14 @@ function DashboardPage() {
           <p>
             {resumo.posicoesFinalizadas} de {resumo.totalPosicoes} posições finalizadas
           </p>
+
           <div className="progress-bar">
             <div
               className="progress-fill"
               style={{ width: `${resumo.percentualPosicoesContadas}%` }}
             />
           </div>
+
           <p>{resumo.percentualPosicoesContadas}%</p>
         </div>
       </div>
@@ -123,31 +171,34 @@ function DashboardPage() {
       <div className="layout">
         <div className="card">
           <h2>Status das Posições</h2>
-          <p><strong>Finalizadas:</strong> {resumo.posicoesFinalizadas}</p>
-          <p><strong>Em recontagem:</strong> {resumo.posicoesRecontagem}</p>
+          <p><strong>Pendentes:</strong> {resumo.posicoesPendentes}</p>
           <p><strong>Em andamento:</strong> {resumo.posicoesEmAndamento}</p>
+          <p><strong>Em recontagem:</strong> {resumo.posicoesRecontagem}</p>
+          <p><strong>Finalizadas:</strong> {resumo.posicoesFinalizadas}</p>
         </div>
 
         <div className="card">
-          <h2>Conferência</h2>
-          <p><strong>Itens corretos:</strong> {resumo.itensCorretos}</p>
-          <p><strong>Itens divergentes:</strong> {resumo.itensDivergentes}</p>
-          <p><strong>Total de itens contados:</strong> {resumo.itensContados}</p>
+          <h2>Base da Acuracidade Atual</h2>
+          <p><strong>Itens avaliados:</strong> {resumo.totalItensAvaliados}</p>
+          <p><strong>Itens corretos:</strong> {resumo.itensCorretosAvaliados}</p>
+          <p><strong>Itens divergentes:</strong> {resumo.itensDivergentesAvaliados}</p>
+          <p><strong>Acuracidade atual:</strong> {resumo.acuracidadeAtual}%</p>
         </div>
       </div>
 
       <div className="layout">
         <div className="card">
-          <h2>Gráfico de Barras — Top SKUs Divergentes</h2>
+          <h2>Gráfico — Top SKUs Divergentes</h2>
 
           {chartData.length === 0 && (
-            <p>Nenhuma divergência encontrada.</p>
+            <p>Nenhuma divergência encontrada em posições finalizadas.</p>
           )}
 
           {chartData.map((item) => {
-            const width = maxBarValue > 0
-              ? (item.divergenciaTotal / maxBarValue) * 100
-              : 0
+            const width =
+              maxBarValue > 0
+                ? (item.divergenciaTotal / maxBarValue) * 100
+                : 0
 
             return (
               <div key={item.sku} className="bar-chart-row">
