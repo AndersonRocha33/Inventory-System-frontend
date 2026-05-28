@@ -788,4 +788,229 @@ strong {
   .mobile-page h1 {
     font-size: 30px;
   }
+
+  .mobile-count-shell {
+  min-height: 100vh;
+  background: var(--spot-bg);
+  color: var(--spot-text);
+}
+
+.mobile-count-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(180deg, #171e29 0%, #1f2633 100%);
+  border-bottom: 1px solid var(--spot-border);
+  padding: 16px;
+}
+
+.mobile-count-top {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mobile-count-top button {
+  flex: 1;
+}
+
+.mobile-count-title span {
+  color: var(--spot-primary);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.mobile-count-title h1 {
+  margin: 4px 0 14px;
+  font-size: 38px;
+}
+
+.mobile-count-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.mobile-count-info div {
+  background: var(--spot-card);
+  border: 1px solid var(--spot-border);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.mobile-count-info span {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.mobile-count-info strong {
+  font-size: 17px;
+}
+
+.mobile-progress-wrapper {
+  margin-top: 14px;
+}
+
+.mobile-progress-bar {
+  width: 100%;
+  height: 14px;
+  background: #111827;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mobile-progress-fill {
+  height: 100%;
+  background: var(--spot-primary);
+}
+
+.mobile-progress-wrapper span {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--spot-primary);
+}
+
+.mobile-mode-alert {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--spot-primary);
+  color: var(--spot-primary);
+  background: rgba(245, 255, 79, 0.08);
+  font-weight: 800;
+}
+
+.mobile-toast {
+  margin: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--spot-primary);
+  background: #2d2430;
+  color: var(--spot-primary);
+  font-weight: 800;
+}
+
+.mobile-count-main {
+  padding: 14px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.mobile-section {
+  margin-bottom: 18px;
+}
+
+.mobile-section-header {
+  margin-bottom: 12px;
+}
+
+.mobile-section-header h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.mobile-section-header p {
+  margin: 4px 0 0;
+}
+
+.mobile-product-card {
+  background: var(--spot-card);
+  border: 1px solid var(--spot-border);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.mobile-product-card.saved {
+  border: 2px solid var(--spot-primary);
+  background: #202735;
+}
+
+.mobile-product-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sku-pill {
+  background: var(--spot-primary);
+  color: var(--spot-primary-text);
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.saved-badge {
+  color: var(--spot-primary);
+  border: 1px solid var(--spot-primary);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 900;
+}
+
+.product-description {
+  font-size: 16px;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.mobile-count-input {
+  font-size: 18px;
+  min-height: 56px;
+}
+
+.mobile-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.saved-quantity {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--spot-card-dark);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.saved-quantity strong {
+  color: var(--spot-primary);
+  font-size: 22px;
+}
+
+.empty-state {
+  border: 1px dashed var(--spot-border);
+  border-radius: 18px;
+  padding: 18px;
+  color: var(--spot-muted);
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .mobile-count-header {
+    position: static;
+  }
+
+  .mobile-count-info {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-actions-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-count-title h1 {
+    font-size: 34px;
+  }
+}
 }
