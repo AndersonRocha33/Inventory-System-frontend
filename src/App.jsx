@@ -30,7 +30,6 @@ function InventoryPage() {
   const [inventories, setInventories] = useState([])
   const [positions, setPositions] = useState([])
   const [operator, setOperator] = useState(params.get("operador") || loggedUser?.nome || "")
-
   const [uploadFile, setUploadFile] = useState(null)
   const [dataInventario, setDataInventario] = useState("")
   const [message, setMessage] = useState("")
@@ -38,6 +37,7 @@ function InventoryPage() {
 
   const [statusFilter, setStatusFilter] = useState("todos")
   const [positionFilter, setPositionFilter] = useState("")
+  const [quickSearch, setQuickSearch] = useState("")
 
   const apiBaseUrl = import.meta.env.VITE_API_URL
   const backendBaseUrl = apiBaseUrl.replace(/\/inventory$/, "")
@@ -280,6 +280,7 @@ function InventoryPage() {
   function clearFilters() {
     setStatusFilter("todos")
     setPositionFilter("")
+    setQuickSearch("")
   }
 
   function logout() {
@@ -298,28 +299,34 @@ function InventoryPage() {
     const contando = positions.filter((p) => p.status === "contando").length
     const recontagem = positions.filter((p) => p.status === "recontagem").length
     const finalizado = positions.filter((p) => p.status === "finalizado").length
+    const percentual = total > 0 ? Math.round((finalizado / total) * 100) : 0
 
     return {
       total,
       pendente,
       contando,
       recontagem,
-      finalizado
+      finalizado,
+      percentual
     }
   }, [positions])
 
   const filteredPositions = useMemo(() => {
+    const searchTerm = quickSearch.trim() || positionFilter.trim()
+
     return positions.filter((position) => {
       const matchesStatus =
         statusFilter === "todos" ? true : position.status === statusFilter
 
       const matchesPosition = String(position.codigo || "")
         .toLowerCase()
-        .includes(positionFilter.trim().toLowerCase())
+        .includes(searchTerm.toLowerCase())
 
       return matchesStatus && matchesPosition
     })
-  }, [positions, statusFilter, positionFilter])
+  }, [positions, statusFilter, positionFilter, quickSearch])
+
+  const uniqueQuickResult = filteredPositions.length === 1 ? filteredPositions[0] : null
 
   useEffect(() => {
     loadInventories()
@@ -327,6 +334,16 @@ function InventoryPage() {
 
   useEffect(() => {
     loadPositions()
+  }, [inventarioId])
+
+  useEffect(() => {
+    if (!inventarioId) return
+
+    const interval = setInterval(() => {
+      loadPositions()
+    }, 30000)
+
+    return () => clearInterval(interval)
   }, [inventarioId])
 
   return (
@@ -371,6 +388,28 @@ function InventoryPage() {
 
         {message && <div className="toast-message">{message}</div>}
 
+        <section className="live-panel">
+          <div>
+            <span>Inventário ativo</span>
+            <strong>
+              {selectedInventory
+                ? `${formatDate(selectedInventory.data_inicio)} - ${selectedInventory.deposito || "-"}`
+                : "Nenhum inventário selecionado"}
+            </strong>
+          </div>
+
+          <div className="live-progress">
+            <div>
+              <span>Progresso</span>
+              <strong>{stats.percentual}%</strong>
+            </div>
+
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${stats.percentual}%` }} />
+            </div>
+          </div>
+        </section>
+
         <section className="summary-grid">
           <div className="summary-card">
             <span>Total</span>
@@ -401,6 +440,22 @@ function InventoryPage() {
             <strong>{stats.finalizado}</strong>
             <p>concluídas</p>
           </div>
+        </section>
+
+        <section className="quick-search-panel">
+          <label>Pesquisa rápida de posição</label>
+          <input
+            type="text"
+            placeholder="Digite a posição. Ex.: K.25.1"
+            value={quickSearch}
+            onChange={(e) => setQuickSearch(e.target.value)}
+          />
+
+          {uniqueQuickResult && (
+            <button onClick={() => openCountPage(uniqueQuickResult)}>
+              Abrir posição {uniqueQuickResult.codigo}
+            </button>
+          )}
         </section>
 
         <section className="content-grid">
@@ -453,14 +508,6 @@ function InventoryPage() {
                 </option>
               ))}
             </select>
-
-            {selectedInventory && (
-              <div className="selected-inventory">
-                <span>Selecionado</span>
-                <strong>{formatDate(selectedInventory.data_inicio)}</strong>
-                <p>{selectedInventory.deposito || "Sem depósito"}</p>
-              </div>
-            )}
 
             <label>Operador</label>
             <input

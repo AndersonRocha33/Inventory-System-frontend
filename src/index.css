@@ -1013,4 +1013,54 @@ strong {
     font-size: 34px;
   }
 }
+
+.live-panel {
+  background: var(--spot-card);
+  border: 1px solid var(--spot-border);
+  border-radius: 22px;
+  padding: 20px;
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 18px;
+  align-items: center;
+}
+
+.live-panel span {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.live-panel strong {
+  font-size: 24px;
+  color: var(--spot-primary);
+}
+
+.live-progress {
+  background: var(--spot-card-dark);
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.quick-search-panel {
+  background: var(--spot-card);
+  border: 1px solid var(--spot-border);
+  border-radius: 22px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+
+.quick-search-panel input {
+  font-size: 20px;
+  min-height: 58px;
+}
+
+@media (max-width: 900px) {
+  .live-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
 }
