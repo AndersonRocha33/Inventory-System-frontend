@@ -101,6 +101,22 @@ input::placeholder {
   color: #8b95a7;
 }
 
+input[type="file"] {
+  background: #151b24;
+  color: var(--spot-text);
+}
+
+input[type="file"]::file-selector-button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-right: 12px;
+  background: var(--spot-primary);
+  color: var(--spot-primary-text);
+  font-weight: 800;
+  cursor: pointer;
+}
+
 button {
   border: none;
   border-radius: 12px;
@@ -123,7 +139,7 @@ button:disabled {
 
 .message {
   background: #2d2430;
-  border: 1px solid #f5ff4f;
+  border: 1px solid var(--spot-primary);
   color: var(--spot-primary);
   padding: 14px;
   border-radius: 12px;
@@ -301,13 +317,15 @@ button:disabled {
 /* Mobile Count */
 
 .mobile-page {
-  max-width: 720px;
+  max-width: 980px;
+  padding-bottom: 80px;
 }
 
 .mobile-header-card {
   position: sticky;
   top: 0;
   z-index: 10;
+  max-height: none;
 }
 
 .mobile-header-top {
@@ -320,8 +338,8 @@ button:disabled {
 .mobile-item-card {
   border: 1px solid var(--spot-border);
   border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 14px;
+  padding: 18px;
+  margin-bottom: 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -330,6 +348,7 @@ button:disabled {
 
 .mobile-item-info p {
   margin: 6px 0 0;
+  line-height: 1.45;
 }
 
 .mobile-item-actions {
@@ -341,6 +360,29 @@ button:disabled {
 .mobile-item-saved {
   border: 2px solid var(--spot-primary);
   background: #202735;
+}
+
+/* Espaçamento melhor para listas no celular */
+
+.mobile-page .card {
+  margin-bottom: 18px;
+}
+
+.mobile-page h1 {
+  font-size: 34px;
+  line-height: 1.15;
+}
+
+.mobile-page h2 {
+  font-size: 24px;
+}
+
+.mobile-page input {
+  min-height: 52px;
+}
+
+.mobile-page button {
+  min-height: 52px;
 }
 
 /* Responsivo */
@@ -399,6 +441,10 @@ button:disabled {
     align-items: stretch;
   }
 
+  .mobile-header-card {
+    position: static;
+  }
+
   .mobile-item-actions {
     flex-direction: column;
   }
@@ -407,5 +453,17 @@ button:disabled {
   .filter-select,
   select {
     font-size: 16px;
+  }
+
+  .mobile-page {
+    padding-bottom: 100px;
+  }
+
+  .mobile-page h1 {
+    font-size: 30px;
+  }
+
+  .mobile-page h2 {
+    font-size: 22px;
   }
 }

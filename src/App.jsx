@@ -6,14 +6,22 @@ import HistoryReportPage from "./pages/HistoryReportPage"
 import MobileCountPage from "./pages/MobileCountPage"
 import "./index.css"
 
+function formatDate(value) {
+  if (!value) return "-"
+  const date = new Date(value)
+  return date.toLocaleDateString("pt-BR")
+}
+
 function InventoryPage() {
   const params = new URLSearchParams(window.location.search)
   const loggedUser = JSON.parse(localStorage.getItem("inventory_user") || "null")
 
-  const [inventarioId, setInventarioId] = useState(params.get("inventarioId") || 1)
+  const [inventarioId, setInventarioId] = useState(params.get("inventarioId") || "")
+  const [inventories, setInventories] = useState([])
   const [positions, setPositions] = useState([])
   const [operator, setOperator] = useState(params.get("operador") || loggedUser?.nome || "")
   const [uploadFile, setUploadFile] = useState(null)
+  const [dataInventario, setDataInventario] = useState("")
   const [message, setMessage] = useState("")
   const [loadingUpload, setLoadingUpload] = useState(false)
 
@@ -23,26 +31,23 @@ function InventoryPage() {
   const apiBaseUrl = import.meta.env.VITE_API_URL
   const backendBaseUrl = apiBaseUrl.replace(/\/inventory$/, "")
 
-  async function loadPositions() {
+  async function loadInventories() {
     try {
-      const response = await api.get(`/${inventarioId}/positions`)
-      setPositions(response.data)
-    } catch (error) {
-      if (error.response?.status === 401) {
-        logout()
-        return
-      }
+      const response = await api.get("/")
+      setInventories(response.data)
 
-      setMessage(
-        error.response?.data?.details ||
-          error.response?.data?.error ||
-          error.message ||
-          "Erro ao carregar posições"
-      )
+      if (!inventarioId && response.data.length > 0) {
+        setInventarioId(response.data[0].id)
+      }
+    } catch (error) {
+      console.error(error)
+      setMessage("Erro ao carregar inventários")
     }
   }
 
-  async function loadPositionsById(id) {
+  async function loadPositions(id = inventarioId) {
+    if (!id) return
+
     try {
       const response = await api.get(`/${id}/positions`)
       setPositions(response.data)
@@ -67,12 +72,18 @@ function InventoryPage() {
       return
     }
 
+    if (!dataInventario) {
+      setMessage("Informe a data do inventário")
+      return
+    }
+
     try {
       setLoadingUpload(true)
       setMessage("Enviando arquivo... aguarde")
 
       const formData = new FormData()
       formData.append("file", uploadFile)
+      formData.append("dataInventario", dataInventario)
 
       const response = await api.post("/upload", formData)
 
@@ -80,10 +91,11 @@ function InventoryPage() {
 
       setInventarioId(novoInventarioId)
       setMessage(
-        `Upload concluído. Inventário ${novoInventarioId} criado com ${response.data.totalPosicoes} posições.`
+        `Upload concluído. Inventário de ${formatDate(dataInventario)} criado com ${response.data.totalPosicoes} posições.`
       )
 
-      await loadPositionsById(novoInventarioId)
+      await loadInventories()
+      await loadPositions(novoInventarioId)
     } catch (error) {
       if (error.response?.status === 401) {
         logout()
@@ -158,6 +170,18 @@ function InventoryPage() {
     }
   }
 
+  function copyShareLink() {
+    if (!inventarioId) {
+      setMessage("Selecione um inventário primeiro")
+      return
+    }
+
+    const url = `${window.location.origin}/?inventarioId=${inventarioId}`
+
+    navigator.clipboard.writeText(url)
+    setMessage("Link do inventário copiado. Envie para os operadores.")
+  }
+
   function exportCsv() {
     const token = localStorage.getItem("inventory_token")
     const url = `${backendBaseUrl}/inventory/${inventarioId}/export`
@@ -199,6 +223,10 @@ function InventoryPage() {
     window.location.href = "/login"
   }
 
+  const selectedInventory = inventories.find(
+    (inventory) => String(inventory.id) === String(inventarioId)
+  )
+
   const filteredPositions = useMemo(() => {
     return positions.filter((position) => {
       const matchesStatus =
@@ -211,6 +239,10 @@ function InventoryPage() {
       return matchesStatus && matchesPosition
     })
   }, [positions, statusFilter, positionFilter])
+
+  useEffect(() => {
+    loadInventories()
+  }, [])
 
   useEffect(() => {
     loadPositions()
@@ -230,8 +262,16 @@ function InventoryPage() {
       </div>
 
       <div className="card">
-        <h2>Upload do CSV</h2>
+        <h2>Novo inventário</h2>
 
+        <label>Data do inventário</label>
+        <input
+          type="date"
+          value={dataInventario}
+          onChange={(e) => setDataInventario(e.target.value)}
+        />
+
+        <label>Arquivo CSV</label>
         <input
           type="file"
           accept=".csv"
@@ -239,17 +279,33 @@ function InventoryPage() {
         />
 
         <button onClick={uploadInventoryFile} disabled={loadingUpload}>
-          {loadingUpload ? "Enviando..." : "Enviar CSV"}
+          {loadingUpload ? "Enviando..." : "Criar inventário com CSV"}
         </button>
       </div>
 
       <div className="card">
-        <label>Inventário</label>
-        <input
-          type="number"
+        <h2>Selecionar inventário</h2>
+
+        <label>Inventário por data</label>
+        <select
           value={inventarioId}
           onChange={(e) => setInventarioId(e.target.value)}
-        />
+          className="filter-select"
+        >
+          <option value="">Selecione um inventário</option>
+          {inventories.map((inventory) => (
+            <option key={inventory.id} value={inventory.id}>
+              {formatDate(inventory.data_inicio)} - {inventory.deposito || "Sem depósito"} - ID {inventory.id}
+            </option>
+          ))}
+        </select>
+
+        {selectedInventory && (
+          <p>
+            <strong>Inventário selecionado:</strong>{" "}
+            {formatDate(selectedInventory.data_inicio)} - {selectedInventory.deposito || "-"}
+          </p>
+        )}
 
         <label>Operador</label>
         <input
@@ -260,7 +316,8 @@ function InventoryPage() {
         />
 
         <div className="actions">
-          <button onClick={loadPositions}>Carregar posições</button>
+          <button onClick={() => loadPositions()}>Carregar posições</button>
+          <button onClick={copyShareLink}>Copiar link para operadores</button>
           <button onClick={openDashboard}>Dashboard</button>
           <button onClick={openHistoryReport}>Relatório histórico</button>
           <button onClick={exportCsv}>Exportar CSV</button>
