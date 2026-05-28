@@ -1086,4 +1086,21 @@ strong {
   }
 }
 
+
+.observation-textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--spot-border);
+  background: #151b24;
+  color: var(--spot-text);
+  font-size: 16px;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.observation-textarea::placeholder {
+  color: #8b95a7;
+}
 }

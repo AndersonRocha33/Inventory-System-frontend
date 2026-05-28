@@ -7,6 +7,7 @@ function MobileCountPage() {
   const [items, setItems] = useState([])
   const [savedItems, setSavedItems] = useState([])
   const [counts, setCounts] = useState({})
+  const [positionObservation, setPositionObservation] = useState("")
   const [extraItem, setExtraItem] = useState({
     sku: "",
     descricao: "",
@@ -36,6 +37,7 @@ function MobileCountPage() {
       }
 
       setPosition(currentPosition)
+      setPositionObservation(currentPosition.observacao || "")
 
       const faseParaSalvos = isReviewMode
         ? reviewPhase || currentPosition.fase_atual
@@ -62,6 +64,7 @@ function MobileCountPage() {
       }
 
       const savedIds = new Set(saved.map((item) => String(item.id)))
+
       const activeItems = activeResponse.data.filter(
         (item) => !savedIds.has(String(item.id))
       )
@@ -73,6 +76,23 @@ function MobileCountPage() {
           error.response?.data?.error ||
           error.message ||
           "Erro ao carregar dados da posição"
+      )
+    }
+  }
+
+  async function savePositionObservation() {
+    try {
+      await api.put(`/positions/${positionId}/observation`, {
+        observacao: positionObservation
+      })
+
+      setMessage("Observação da posição salva")
+    } catch (error) {
+      setMessage(
+        error.response?.data?.details ||
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao salvar observação"
       )
     }
   }
@@ -282,23 +302,33 @@ function MobileCountPage() {
 
           <span>{progress.percent}% concluído</span>
         </div>
-
-        {isReviewMode && (
-          <div className="mobile-mode-alert">
-            Revisão dos itens já salvos
-          </div>
-        )}
-
-        {!isReviewMode && Number(position.fase_atual || 1) > 1 && (
-          <div className="mobile-mode-alert">
-            Recontagem: exibindo apenas itens divergentes
-          </div>
-        )}
       </header>
 
       {message && <div className="mobile-toast">{message}</div>}
 
       <main className="mobile-count-main">
+        <section className="mobile-section">
+          <div className="mobile-section-header">
+            <div>
+              <h2>Observação da posição</h2>
+              <p>Registre avarias, mistura, falta de etiqueta ou qualquer ocorrência.</p>
+            </div>
+          </div>
+
+          <div className="mobile-product-card">
+            <textarea
+              className="observation-textarea"
+              placeholder="Ex.: produto avariado, caixa sem etiqueta, endereço misturado..."
+              value={positionObservation}
+              onChange={(e) => setPositionObservation(e.target.value)}
+            />
+
+            <button onClick={savePositionObservation}>
+              Salvar observação
+            </button>
+          </div>
+        </section>
+
         <section className="mobile-section">
           <div className="mobile-section-header">
             <div>
