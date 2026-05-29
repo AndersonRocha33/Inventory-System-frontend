@@ -78,9 +78,7 @@ function FinishedInventoriesPage() {
         id: inventory.id,
         data: formatDate(inventory.data_inicio),
         deposito: inventory.deposito || "-",
-        acuracidade: Number(inventory.resumo?.acuracidadeAtual || 0),
-        itensContados: Number(inventory.resumo?.itensContados || 0),
-        posicoesFinalizadas: Number(inventory.resumo?.posicoesFinalizadas || 0)
+        acuracidade: Number(inventory.resumo?.acuracidadeAtual || 0)
       }))
       .sort((a, b) => a.id - b.id)
   }, [inventories])
@@ -131,10 +129,10 @@ function FinishedInventoriesPage() {
               <div
                 style={{
                   display: "flex",
-                  gap: "24px",
+                  gap: "20px",
                   alignItems: "flex-end",
-                  minHeight: "360px",
-                  padding: "24px",
+                  minHeight: "260px",
+                  padding: "20px",
                   background: "#1b222d",
                   border: "1px solid #3b4657",
                   borderRadius: "20px",
@@ -143,7 +141,7 @@ function FinishedInventoriesPage() {
               >
                 <div
                   style={{
-                    height: "260px",
+                    height: "180px",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
@@ -163,8 +161,8 @@ function FinishedInventoriesPage() {
                   style={{
                     display: "flex",
                     alignItems: "flex-end",
-                    gap: "32px",
-                    height: "320px",
+                    gap: "28px",
+                    height: "230px",
                     minWidth: "max-content"
                   }}
                 >
@@ -175,8 +173,8 @@ function FinishedInventoriesPage() {
                       <div
                         key={item.id}
                         style={{
-                          width: "120px",
-                          height: "320px",
+                          width: "110px",
+                          height: "230px",
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
@@ -185,11 +183,11 @@ function FinishedInventoriesPage() {
                       >
                         <div
                           style={{
-                            width: "58px",
-                            height: "260px",
+                            width: "54px",
+                            height: "180px",
                             background: "#111827",
                             border: "1px solid #3b4657",
-                            borderRadius: "18px",
+                            borderRadius: "16px",
                             display: "flex",
                             alignItems: "flex-end",
                             overflow: "hidden"
@@ -199,12 +197,12 @@ function FinishedInventoriesPage() {
                             style={{
                               width: "100%",
                               height: `${height}%`,
+                              minHeight: "26px",
                               background: "#f5ff4f",
-                              borderRadius: "18px 18px 0 0",
+                              borderRadius: "16px 16px 0 0",
                               display: "flex",
-                              alignItems: "flex-start",
+                              alignItems: "center",
                               justifyContent: "center",
-                              paddingTop: "8px",
                               color: "#111827",
                               fontWeight: "900",
                               fontSize: "13px"
@@ -228,7 +226,7 @@ function FinishedInventoriesPage() {
                           style={{
                             fontSize: "12px",
                             textAlign: "center",
-                            maxWidth: "110px",
+                            maxWidth: "100px",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis"
