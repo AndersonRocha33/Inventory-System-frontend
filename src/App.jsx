@@ -4,22 +4,12 @@ import AuthPage from "./pages/AuthPage"
 import DashboardPage from "./pages/DashboardPage"
 import HistoryReportPage from "./pages/HistoryReportPage"
 import MobileCountPage from "./pages/MobileCountPage"
+import PositionsPage from "./pages/PositionsPage"
 import "./index.css"
 
 function formatDate(value) {
   if (!value) return "-"
   return new Date(value).toLocaleDateString("pt-BR")
-}
-
-function getStatusLabel(status) {
-  const labels = {
-    pendente: "Pendente",
-    contando: "Em contagem",
-    recontagem: "Recontagem",
-    finalizado: "Finalizado"
-  }
-
-  return labels[status] || status
 }
 
 function InventoryPage() {
@@ -34,10 +24,6 @@ function InventoryPage() {
   const [dataInventario, setDataInventario] = useState("")
   const [message, setMessage] = useState("")
   const [loadingUpload, setLoadingUpload] = useState(false)
-
-  const [statusFilter, setStatusFilter] = useState("todos")
-  const [positionFilter, setPositionFilter] = useState("")
-  const [quickSearch, setQuickSearch] = useState("")
 
   const apiBaseUrl = import.meta.env.VITE_API_URL
   const backendBaseUrl = apiBaseUrl.replace(/\/inventory$/, "")
@@ -122,71 +108,6 @@ function InventoryPage() {
     }
   }
 
-  function getReviewPhase(position) {
-    if (position.primeiro_operador === operator) return 1
-    if (position.segundo_operador === operator) return 2
-    if (position.terceiro_operador === operator) return 3
-    return position.fase_atual || 1
-  }
-
-  function operatorAlreadyCounted(position) {
-    return (
-      position.primeiro_operador === operator ||
-      position.segundo_operador === operator ||
-      position.terceiro_operador === operator
-    )
-  }
-
-  async function openCountPage(position) {
-    try {
-      if (!operator || !operator.trim()) {
-        setMessage("Informe o operador antes de iniciar")
-        return
-      }
-
-      const alreadyCounted = operatorAlreadyCounted(position)
-      const isRecount = position.status === "recontagem"
-
-      if (alreadyCounted && isRecount) {
-        const reviewPhase = getReviewPhase(position)
-
-        window.location.href = `/count?mode=review&positionId=${position.id}&inventarioId=${inventarioId}&operador=${encodeURIComponent(
-          operator
-        )}&reviewPhase=${reviewPhase}`
-
-        return
-      }
-
-      if (position.status === "contando" && position.operador_atual === operator) {
-        window.location.href = `/count?mode=count&positionId=${position.id}&inventarioId=${inventarioId}&operador=${encodeURIComponent(
-          operator
-        )}`
-
-        return
-      }
-
-      await api.post(`/positions/${position.id}/start`, {
-        operador: operator
-      })
-
-      window.location.href = `/count?mode=count&positionId=${position.id}&inventarioId=${inventarioId}&operador=${encodeURIComponent(
-        operator
-      )}`
-    } catch (error) {
-      if (error.response?.status === 401) {
-        logout()
-        return
-      }
-
-      setMessage(
-        error.response?.data?.details ||
-          error.response?.data?.error ||
-          error.message ||
-          "Erro ao iniciar contagem"
-      )
-    }
-  }
-
   function copyShareLink() {
     if (!inventarioId) {
       setMessage("Selecione um inventário primeiro")
@@ -196,6 +117,30 @@ function InventoryPage() {
     const url = `${window.location.origin}/?inventarioId=${inventarioId}`
     navigator.clipboard.writeText(url)
     setMessage("Link do inventário copiado.")
+  }
+
+  function openDashboard() {
+    window.open(`${window.location.origin}/dashboard?inventarioId=${inventarioId}`, "_blank")
+  }
+
+  function openHistoryReport() {
+    window.open(`${window.location.origin}/history-report?inventarioId=${inventarioId}`, "_blank")
+  }
+
+  function openPositionsPage() {
+    if (!inventarioId) {
+      setMessage("Selecione um inventário")
+      return
+    }
+
+    if (!operator) {
+      setMessage("Informe o operador")
+      return
+    }
+
+    window.location.href = `/positions?inventarioId=${inventarioId}&operador=${encodeURIComponent(
+      operator
+    )}`
   }
 
   function exportCsv() {
@@ -218,14 +163,6 @@ function InventoryPage() {
         a.remove()
       })
       .catch(() => setMessage("Erro ao exportar CSV"))
-  }
-
-  function openDashboard() {
-    window.open(`${window.location.origin}/dashboard?inventarioId=${inventarioId}`, "_blank")
-  }
-
-  function openHistoryReport() {
-    window.open(`${window.location.origin}/history-report?inventarioId=${inventarioId}`, "_blank")
   }
 
   async function finishSelectedInventory() {
@@ -277,12 +214,6 @@ function InventoryPage() {
     }
   }
 
-  function clearFilters() {
-    setStatusFilter("todos")
-    setPositionFilter("")
-    setQuickSearch("")
-  }
-
   function logout() {
     localStorage.removeItem("inventory_user")
     localStorage.removeItem("inventory_token")
@@ -295,38 +226,11 @@ function InventoryPage() {
 
   const stats = useMemo(() => {
     const total = positions.length
-    const pendente = positions.filter((p) => p.status === "pendente").length
-    const contando = positions.filter((p) => p.status === "contando").length
-    const recontagem = positions.filter((p) => p.status === "recontagem").length
     const finalizado = positions.filter((p) => p.status === "finalizado").length
     const percentual = total > 0 ? Math.round((finalizado / total) * 100) : 0
 
-    return {
-      total,
-      pendente,
-      contando,
-      recontagem,
-      finalizado,
-      percentual
-    }
+    return { total, finalizado, percentual }
   }, [positions])
-
-  const filteredPositions = useMemo(() => {
-    const searchTerm = quickSearch.trim() || positionFilter.trim()
-
-    return positions.filter((position) => {
-      const matchesStatus =
-        statusFilter === "todos" ? true : position.status === statusFilter
-
-      const matchesPosition = String(position.codigo || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-
-      return matchesStatus && matchesPosition
-    })
-  }, [positions, statusFilter, positionFilter, quickSearch])
-
-  const uniqueQuickResult = filteredPositions.length === 1 ? filteredPositions[0] : null
 
   useEffect(() => {
     loadInventories()
@@ -363,7 +267,6 @@ function InventoryPage() {
         </div>
 
         <nav className="sidebar-actions">
-          <button onClick={() => loadPositions()}>Atualizar posições</button>
           <button onClick={openDashboard}>Dashboard</button>
           <button onClick={openHistoryReport}>Histórico</button>
           <button onClick={exportCsv}>Exportar CSV</button>
@@ -379,7 +282,7 @@ function InventoryPage() {
             <p className="eyebrow">Sistema de inventário</p>
             <h2>Controle de posições</h2>
             <span>
-              Selecione o inventário, compartilhe com os operadores e acompanhe a contagem em tempo real.
+              Selecione o inventário, compartilhe com os operadores e acompanhe o andamento.
             </span>
           </div>
 
@@ -408,54 +311,6 @@ function InventoryPage() {
               <div className="progress-fill" style={{ width: `${stats.percentual}%` }} />
             </div>
           </div>
-        </section>
-
-        <section className="summary-grid">
-          <div className="summary-card">
-            <span>Total</span>
-            <strong>{stats.total}</strong>
-            <p>posições</p>
-          </div>
-
-          <div className="summary-card">
-            <span>Pendentes</span>
-            <strong>{stats.pendente}</strong>
-            <p>aguardando</p>
-          </div>
-
-          <div className="summary-card">
-            <span>Em contagem</span>
-            <strong>{stats.contando}</strong>
-            <p>em andamento</p>
-          </div>
-
-          <div className="summary-card">
-            <span>Recontagem</span>
-            <strong>{stats.recontagem}</strong>
-            <p>com divergência</p>
-          </div>
-
-          <div className="summary-card">
-            <span>Finalizadas</span>
-            <strong>{stats.finalizado}</strong>
-            <p>concluídas</p>
-          </div>
-        </section>
-
-        <section className="quick-search-panel">
-          <label>Pesquisa rápida de posição</label>
-          <input
-            type="text"
-            placeholder="Digite a posição. Ex.: K.25.1"
-            value={quickSearch}
-            onChange={(e) => setQuickSearch(e.target.value)}
-          />
-
-          {uniqueQuickResult && (
-            <button onClick={() => openCountPage(uniqueQuickResult)}>
-              Abrir posição {uniqueQuickResult.codigo}
-            </button>
-          )}
         </section>
 
         <section className="content-grid">
@@ -490,7 +345,7 @@ function InventoryPage() {
             <div className="panel-header">
               <div>
                 <h3>Inventário ativo</h3>
-                <p>Escolha o inventário que será trabalhado.</p>
+                <p>Escolha o inventário e abra a tela de posições.</p>
               </div>
             </div>
 
@@ -518,113 +373,18 @@ function InventoryPage() {
             />
 
             <div className="action-grid">
-              <button onClick={finishSelectedInventory}>Finalizar</button>
-              <button onClick={deleteSelectedInventory} className="danger-button">
-                Excluir
+              <button onClick={openPositionsPage}>
+                Abrir posições
+              </button>
+
+              <button onClick={finishSelectedInventory}>
+                Finalizar
+              </button>
+
+              <button onClick={deleteSelectedInventory} className="danger-button action-grid-full">
+                Excluir inventário
               </button>
             </div>
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <h3>Filtros</h3>
-              <p>Encontre rapidamente a posição para contagem.</p>
-            </div>
-
-            <button onClick={clearFilters} className="secondary-button">
-              Limpar
-            </button>
-          </div>
-
-          <div className="filters-row">
-            <div>
-              <label>Status</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="todos">Todos</option>
-                <option value="pendente">Pendente</option>
-                <option value="contando">Contando</option>
-                <option value="recontagem">Recontagem</option>
-                <option value="finalizado">Finalizado</option>
-              </select>
-            </div>
-
-            <div>
-              <label>Posição</label>
-              <input
-                type="text"
-                placeholder="Ex.: K.01.4"
-                value={positionFilter}
-                onChange={(e) => setPositionFilter(e.target.value)}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <h3>Posições</h3>
-              <p>{filteredPositions.length} resultado(s) encontrados.</p>
-            </div>
-          </div>
-
-          <div className="positions-grid">
-            {filteredPositions.map((position) => {
-              const alreadyCounted = operatorAlreadyCounted(position)
-              const isRecount = position.status === "recontagem"
-              const isLockedByOther =
-                position.status === "contando" &&
-                position.operador_atual &&
-                position.operador_atual !== operator
-
-              return (
-                <div key={position.id} className="position-card">
-                  <div className="position-card-top">
-                    <div>
-                      <strong>{position.codigo}</strong>
-                      <span className={`status-badge status-${position.status}`}>
-                        {getStatusLabel(position.status)}
-                      </span>
-                    </div>
-
-                    <span className="phase-pill">Fase {position.fase_atual}</span>
-                  </div>
-
-                  <div className="position-meta">
-                    <p>1º contador: {position.primeiro_operador || "-"}</p>
-                    <p>2º contador: {position.segundo_operador || "-"}</p>
-                    <p>3º contador: {position.terceiro_operador || "-"}</p>
-                  </div>
-
-                  {isLockedByOther && (
-                    <div className="locked-info">
-                      Em uso por {position.operador_atual}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => openCountPage(position)}
-                    disabled={!operator || isLockedByOther}
-                  >
-                    {alreadyCounted && isRecount
-                      ? "Revisar posição"
-                      : Number(position.fase_atual || 1) > 1
-                      ? "Abrir recontagem"
-                      : position.status === "finalizado"
-                      ? "Revisar posição"
-                      : position.status === "contando" && position.operador_atual === operator
-                      ? "Continuar contagem"
-                      : "Abrir contagem"}
-                  </button>
-                </div>
-              )
-            })}
           </div>
         </section>
       </main>
@@ -640,6 +400,7 @@ function App() {
   if (window.location.pathname === "/dashboard") return <DashboardPage />
   if (window.location.pathname === "/history-report") return <HistoryReportPage />
   if (window.location.pathname === "/count") return <MobileCountPage />
+  if (window.location.pathname === "/positions") return <PositionsPage />
 
   return <InventoryPage />
 }
