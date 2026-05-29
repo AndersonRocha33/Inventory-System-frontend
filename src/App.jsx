@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage"
 import HistoryReportPage from "./pages/HistoryReportPage"
 import MobileCountPage from "./pages/MobileCountPage"
 import PositionsPage from "./pages/PositionsPage"
+import FinishedInventoriesPage from "./pages/FinishedInventoriesPage"
 import "./index.css"
 
 function formatDate(value) {
@@ -34,7 +35,11 @@ function InventoryPage() {
       setInventories(response.data)
 
       if (!inventarioId && response.data.length > 0) {
-        setInventarioId(response.data[0].id)
+        const openInventory = response.data.find(
+          (inventory) => inventory.status !== "finalizado" && inventory.arquivado !== true
+        )
+
+        setInventarioId(openInventory?.id || response.data[0].id)
       }
     } catch {
       setMessage("Erro ao carregar inventários")
@@ -127,6 +132,10 @@ function InventoryPage() {
     window.open(`${window.location.origin}/history-report?inventarioId=${inventarioId}`, "_blank")
   }
 
+  function openFinishedInventories() {
+    window.location.href = "/finished-inventories"
+  }
+
   function openPositionsPage() {
     if (!inventarioId) {
       setMessage("Selecione um inventário")
@@ -177,6 +186,7 @@ function InventoryPage() {
     try {
       await api.post(`/${inventarioId}/finish`)
       setMessage("Inventário finalizado e arquivado")
+
       await loadInventories()
       await loadPositions()
     } catch (error) {
@@ -219,6 +229,10 @@ function InventoryPage() {
     localStorage.removeItem("inventory_token")
     window.location.href = "/login"
   }
+
+  const activeInventories = inventories.filter(
+    (inventory) => inventory.status !== "finalizado" && inventory.arquivado !== true
+  )
 
   const selectedInventory = inventories.find(
     (inventory) => String(inventory.id) === String(inventarioId)
@@ -279,6 +293,7 @@ function InventoryPage() {
         <nav className="sidebar-actions">
           <button onClick={openDashboard}>Dashboard</button>
           <button onClick={openHistoryReport}>Histórico</button>
+          <button onClick={openFinishedInventories}>Inventários finalizados</button>
           <button onClick={exportCsv}>Exportar CSV</button>
           <button onClick={logout} className="secondary-button">
             Sair
@@ -399,7 +414,7 @@ function InventoryPage() {
             >
               <option value="">Selecione</option>
 
-              {inventories.map((inventory) => (
+              {activeInventories.map((inventory) => (
                 <option key={inventory.id} value={inventory.id}>
                   {formatDate(inventory.data_inicio)} - {inventory.deposito || "-"} - ID {inventory.id}
                 </option>
@@ -443,6 +458,7 @@ function App() {
   if (window.location.pathname === "/history-report") return <HistoryReportPage />
   if (window.location.pathname === "/count") return <MobileCountPage />
   if (window.location.pathname === "/positions") return <PositionsPage />
+  if (window.location.pathname === "/finished-inventories") return <FinishedInventoriesPage />
 
   return <InventoryPage />
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import api from "../services/api"
 import "../index.css"
 
@@ -9,7 +9,7 @@ function DashboardPage() {
   const params = new URLSearchParams(window.location.search)
   const inventarioId = params.get("inventarioId") || "1"
 
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     try {
       const response = await api.get(`/${inventarioId}/report`)
       setReport(response.data)
@@ -17,17 +17,22 @@ function DashboardPage() {
     } catch {
       setError("Erro ao carregar dashboard")
     }
-  }
+  }, [inventarioId])
 
   useEffect(() => {
-    loadDashboard()
+    const timeout = setTimeout(() => {
+      loadDashboard()
+    }, 0)
 
     const interval = setInterval(() => {
       loadDashboard()
     }, 30000)
 
-    return () => clearInterval(interval)
-  }, [inventarioId])
+    return () => {
+      clearTimeout(timeout)
+      clearInterval(interval)
+    }
+  }, [loadDashboard])
 
   if (error) {
     return (
@@ -60,8 +65,6 @@ function DashboardPage() {
           <p className="eyebrow">Gestão do inventário</p>
           <h1>Dashboard Executivo</h1>
         </div>
-
-        <button onClick={loadDashboard}>Atualizar agora</button>
       </div>
 
       <div className="dashboard-grid">
