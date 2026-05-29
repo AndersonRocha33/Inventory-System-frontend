@@ -1263,4 +1263,115 @@ strong {
     text-align: left;
   }
 }
+
+.inventory-chart-card {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 18px;
+  min-height: 340px;
+  padding: 24px;
+  background: var(--spot-card-dark);
+  border: 1px solid var(--spot-border);
+  border-radius: 20px;
+  overflow-x: auto;
+}
+
+.inventory-chart-scale {
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.inventory-chart-scale span {
+  color: var(--spot-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.inventory-vertical-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  min-width: max-content;
+  height: 290px;
+  padding-bottom: 8px;
+}
+
+.inventory-chart-item {
+  width: 110px;
+  height: 290px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.inventory-chart-bar-wrapper {
+  width: 58px;
+  height: 240px;
+  background: #111827;
+  border: 1px solid var(--spot-border);
+  border-radius: 18px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.inventory-chart-bar {
+  width: 100%;
+  min-height: 8px;
+  background: var(--spot-primary);
+  border-radius: 18px 18px 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.inventory-chart-bar span {
+  color: var(--spot-primary-text);
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.inventory-chart-item strong {
+  color: var(--spot-text);
+  font-size: 15px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.inventory-chart-item p {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 700px) {
+  .inventory-chart-card {
+    grid-template-columns: 44px 1fr;
+    padding: 16px;
+  }
+
+  .inventory-vertical-chart {
+    gap: 18px;
+  }
+
+  .inventory-chart-item {
+    width: 92px;
+  }
+
+  .inventory-chart-bar-wrapper {
+    width: 48px;
+  }
+}
 }

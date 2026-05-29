@@ -78,11 +78,9 @@ function FinishedInventoriesPage() {
         id: inventory.id,
         data: formatDate(inventory.data_inicio),
         deposito: inventory.deposito || "-",
-        acuracidade: Number(inventory.resumo?.acuracidadeAtual || 0),
-        itensContados: Number(inventory.resumo?.itensContados || 0),
-        posicoesFinalizadas: Number(inventory.resumo?.posicoesFinalizadas || 0)
+        acuracidade: Number(inventory.resumo?.acuracidadeAtual || 0)
       }))
-      .sort((a, b) => a.id - b.id)
+      .sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio))
   }, [inventories])
 
   useEffect(() => {
@@ -128,26 +126,36 @@ function FinishedInventoriesPage() {
             )}
 
             {chartData.length > 0 && (
-              <div className="history-bar-chart">
-                {chartData.map((item) => (
-                  <div key={item.id} className="history-bar-row">
-                    <div className="history-bar-label">
-                      <strong>{item.data}</strong>
-                      <span>{item.deposito}</span>
-                    </div>
+              <div className="inventory-chart-card">
+                <div className="inventory-chart-scale">
+                  <span>100%</span>
+                  <span>75%</span>
+                  <span>50%</span>
+                  <span>25%</span>
+                  <span>0%</span>
+                </div>
 
-                    <div className="history-bar-track">
-                      <div
-                        className="history-bar-fill"
-                        style={{ width: `${item.acuracidade}%` }}
-                      />
-                    </div>
+                <div className="inventory-vertical-chart">
+                  {chartData.map((item) => {
+                    const height = Math.max(2, item.acuracidade)
 
-                    <div className="history-bar-value">
-                      {item.acuracidade.toFixed(2)}%
-                    </div>
-                  </div>
-                ))}
+                    return (
+                      <div key={item.id} className="inventory-chart-item">
+                        <div className="inventory-chart-bar-wrapper">
+                          <div
+                            className="inventory-chart-bar"
+                            style={{ height: `${height}%` }}
+                          >
+                            <span>{item.acuracidade.toFixed(0)}%</span>
+                          </div>
+                        </div>
+
+                        <strong>{item.data}</strong>
+                        <p>{item.deposito}</p>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </section>
