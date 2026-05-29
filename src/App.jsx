@@ -6,6 +6,7 @@ import HistoryReportPage from "./pages/HistoryReportPage"
 import MobileCountPage from "./pages/MobileCountPage"
 import PositionsPage from "./pages/PositionsPage"
 import FinishedInventoriesPage from "./pages/FinishedInventoriesPage"
+import TvDashboardPage from "./pages/TvDashboardPage"
 import "./index.css"
 
 function formatDate(value) {
@@ -125,10 +126,29 @@ function InventoryPage() {
   }
 
   function openDashboard() {
+    if (!inventarioId) {
+      setMessage("Selecione um inventário")
+      return
+    }
+
     window.open(`${window.location.origin}/dashboard?inventarioId=${inventarioId}`, "_blank")
   }
 
+  function openTvDashboard() {
+    if (!inventarioId) {
+      setMessage("Selecione um inventário")
+      return
+    }
+
+    window.open(`${window.location.origin}/tv-dashboard?inventarioId=${inventarioId}`, "_blank")
+  }
+
   function openHistoryReport() {
+    if (!inventarioId) {
+      setMessage("Selecione um inventário")
+      return
+    }
+
     window.open(`${window.location.origin}/history-report?inventarioId=${inventarioId}`, "_blank")
   }
 
@@ -153,6 +173,11 @@ function InventoryPage() {
   }
 
   function exportCsv() {
+    if (!inventarioId) {
+      setMessage("Selecione um inventário")
+      return
+    }
+
     const token = localStorage.getItem("inventory_token")
     const url = `${backendBaseUrl}/inventory/${inventarioId}/export`
 
@@ -174,39 +199,64 @@ function InventoryPage() {
       .catch(() => setMessage("Erro ao exportar CSV"))
   }
 
+  function exportExcel() {
+    if (!inventarioId) {
+      setMessage("Selecione um inventário")
+      return
+    }
+
+    const token = localStorage.getItem("inventory_token")
+    const url = `${backendBaseUrl}/inventory/${inventarioId}/export-excel`
+
+    fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then((response) => response.blob())
+      .then((blob) => {
+        const downloadUrl = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = downloadUrl
+        a.download = "inventario.xlsx"
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+      })
+      .catch(() => setMessage("Erro ao exportar Excel"))
+  }
+
   async function finishSelectedInventory() {
-  if (!inventarioId) {
-    setMessage("Selecione um inventário")
-    return
-  }
+    if (!inventarioId) {
+      setMessage("Selecione um inventário")
+      return
+    }
 
-  const pendencias =
-    stats.pendentes + stats.andamento + stats.recontagem
+    const pendencias = stats.pendentes + stats.andamento + stats.recontagem
 
-  const confirmed = window.confirm(
-    pendencias > 0
-      ? `Este inventário ainda possui pendências:\n\nPendentes: ${stats.pendentes}\nEm andamento: ${stats.andamento}\nRecontagem: ${stats.recontagem}\n\nDeseja finalizar mesmo assim?`
-      : "Deseja finalizar este inventário?"
-  )
-
-  if (!confirmed) return
-
-  try {
-    const response = await api.post(`/${inventarioId}/finish`)
-
-    setMessage(response.data.message || "Inventário finalizado")
-
-    await loadInventories()
-    await loadPositions()
-  } catch (error) {
-    setMessage(
-      error.response?.data?.details ||
-        error.response?.data?.error ||
-        error.message ||
-        "Erro ao finalizar inventário"
+    const confirmed = window.confirm(
+      pendencias > 0
+        ? `Este inventário ainda possui pendências:\n\nPendentes: ${stats.pendentes}\nEm andamento: ${stats.andamento}\nRecontagem: ${stats.recontagem}\n\nDeseja finalizar mesmo assim?`
+        : "Deseja finalizar este inventário?"
     )
+
+    if (!confirmed) return
+
+    try {
+      const response = await api.post(`/${inventarioId}/finish`)
+      setMessage(response.data.message || "Inventário finalizado")
+
+      await loadInventories()
+      await loadPositions()
+    } catch (error) {
+      setMessage(
+        error.response?.data?.details ||
+          error.response?.data?.error ||
+          error.message ||
+          "Erro ao finalizar inventário"
+      )
+    }
   }
-}
 
   async function deleteSelectedInventory() {
     if (!inventarioId) {
@@ -301,9 +351,11 @@ function InventoryPage() {
 
         <nav className="sidebar-actions">
           <button onClick={openDashboard}>Dashboard</button>
+          <button onClick={openTvDashboard}>TV/CD</button>
           <button onClick={openHistoryReport}>Histórico</button>
           <button onClick={openFinishedInventories}>Inventários finalizados</button>
           <button onClick={exportCsv}>Exportar CSV</button>
+          <button onClick={exportExcel}>Exportar Excel</button>
           <button onClick={logout} className="secondary-button">
             Sair
           </button>
@@ -468,6 +520,7 @@ function App() {
   if (window.location.pathname === "/count") return <MobileCountPage />
   if (window.location.pathname === "/positions") return <PositionsPage />
   if (window.location.pathname === "/finished-inventories") return <FinishedInventoriesPage />
+  if (window.location.pathname === "/tv-dashboard") return <TvDashboardPage />
 
   return <InventoryPage />
 }

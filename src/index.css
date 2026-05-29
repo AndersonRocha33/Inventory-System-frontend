@@ -1374,4 +1374,153 @@ strong {
     width: 48px;
   }
 }
+
+.tv-dashboard {
+  min-height: 100vh;
+  padding: 34px;
+  background: #111827;
+  color: white;
+}
+
+.tv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 34px;
+}
+
+.tv-header p {
+  color: var(--spot-primary);
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin: 0 0 6px;
+}
+
+.tv-header h1 {
+  font-size: 56px;
+  margin: 0;
+}
+
+.tv-clock {
+  color: var(--spot-primary);
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.tv-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 22px;
+  margin-bottom: 22px;
+}
+
+.tv-card {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 28px;
+  padding: 32px;
+}
+
+.tv-card span {
+  display: block;
+  font-size: 24px;
+  color: #dbeafe;
+  font-weight: 800;
+}
+
+.tv-card strong {
+  display: block;
+  font-size: 64px;
+  color: var(--spot-primary);
+  margin: 18px 0 8px;
+}
+
+.tv-card p {
+  font-size: 20px;
+  margin: 0;
+}
+
+.tv-card.featured strong {
+  font-size: 82px;
+}
+
+.tv-card.warning strong {
+  color: #f59e0b;
+}
+
+.tv-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.tv-panel {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 28px;
+  padding: 30px;
+}
+
+.tv-panel h2 {
+  font-size: 34px;
+  margin-top: 0;
+}
+
+.tv-status-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.tv-status-list div,
+.tv-ranking-row {
+  background: #111827;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.tv-status-list span,
+.tv-ranking-row span {
+  font-size: 22px;
+}
+
+.tv-status-list strong,
+.tv-ranking-row strong {
+  display: block;
+  color: var(--spot-primary);
+  font-size: 38px;
+  margin-top: 8px;
+}
+
+.tv-ranking-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.tv-ranking-row strong {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .tv-grid,
+  .tv-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .tv-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tv-header h1 {
+    font-size: 38px;
+  }
+
+  .tv-card strong {
+    font-size: 44px;
+  }
+}
 }
