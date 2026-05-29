@@ -78,9 +78,11 @@ function FinishedInventoriesPage() {
         id: inventory.id,
         data: formatDate(inventory.data_inicio),
         deposito: inventory.deposito || "-",
-        acuracidade: Number(inventory.resumo?.acuracidadeAtual || 0)
+        acuracidade: Number(inventory.resumo?.acuracidadeAtual || 0),
+        itensContados: Number(inventory.resumo?.itensContados || 0),
+        posicoesFinalizadas: Number(inventory.resumo?.posicoesFinalizadas || 0)
       }))
-      .sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio))
+      .sort((a, b) => a.id - b.id)
   }, [inventories])
 
   useEffect(() => {
@@ -126,8 +128,30 @@ function FinishedInventoriesPage() {
             )}
 
             {chartData.length > 0 && (
-              <div className="inventory-chart-card">
-                <div className="inventory-chart-scale">
+              <div
+                style={{
+                  display: "flex",
+                  gap: "24px",
+                  alignItems: "flex-end",
+                  minHeight: "360px",
+                  padding: "24px",
+                  background: "#1b222d",
+                  border: "1px solid #3b4657",
+                  borderRadius: "20px",
+                  overflowX: "auto"
+                }}
+              >
+                <div
+                  style={{
+                    height: "260px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    alignItems: "flex-end",
+                    paddingRight: "8px",
+                    minWidth: "46px"
+                  }}
+                >
                   <span>100%</span>
                   <span>75%</span>
                   <span>50%</span>
@@ -135,23 +159,83 @@ function FinishedInventoriesPage() {
                   <span>0%</span>
                 </div>
 
-                <div className="inventory-vertical-chart">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    gap: "32px",
+                    height: "320px",
+                    minWidth: "max-content"
+                  }}
+                >
                   {chartData.map((item) => {
-                    const height = Math.max(2, item.acuracidade)
+                    const height = Math.max(4, item.acuracidade)
 
                     return (
-                      <div key={item.id} className="inventory-chart-item">
-                        <div className="inventory-chart-bar-wrapper">
+                      <div
+                        key={item.id}
+                        style={{
+                          width: "120px",
+                          height: "320px",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "flex-end"
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "58px",
+                            height: "260px",
+                            background: "#111827",
+                            border: "1px solid #3b4657",
+                            borderRadius: "18px",
+                            display: "flex",
+                            alignItems: "flex-end",
+                            overflow: "hidden"
+                          }}
+                        >
                           <div
-                            className="inventory-chart-bar"
-                            style={{ height: `${height}%` }}
+                            style={{
+                              width: "100%",
+                              height: `${height}%`,
+                              background: "#f5ff4f",
+                              borderRadius: "18px 18px 0 0",
+                              display: "flex",
+                              alignItems: "flex-start",
+                              justifyContent: "center",
+                              paddingTop: "8px",
+                              color: "#111827",
+                              fontWeight: "900",
+                              fontSize: "13px"
+                            }}
                           >
-                            <span>{item.acuracidade.toFixed(0)}%</span>
+                            {item.acuracidade.toFixed(0)}%
                           </div>
                         </div>
 
-                        <strong>{item.data}</strong>
-                        <p>{item.deposito}</p>
+                        <strong
+                          style={{
+                            marginTop: "10px",
+                            color: "#ffffff",
+                            textAlign: "center"
+                          }}
+                        >
+                          {item.data}
+                        </strong>
+
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            textAlign: "center",
+                            maxWidth: "110px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis"
+                          }}
+                        >
+                          {item.deposito}
+                        </span>
                       </div>
                     )
                   })}
