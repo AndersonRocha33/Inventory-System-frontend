@@ -20,8 +20,7 @@ function FinishedInventoriesPage() {
 
       const finished = response.data.filter(
         (inventory) =>
-          inventory.status === "finalizado" ||
-          inventory.arquivado === true
+          inventory.status === "finalizado" || inventory.arquivado === true
       )
 
       const inventoriesWithReport = await Promise.all(
@@ -78,14 +77,13 @@ function FinishedInventoriesPage() {
       .map((inventory) => ({
         id: inventory.id,
         data: formatDate(inventory.data_inicio),
+        deposito: inventory.deposito || "-",
         acuracidade: Number(inventory.resumo?.acuracidadeAtual || 0),
-        posicoes: Number(inventory.resumo?.posicoesFinalizadas || 0),
-        itens: Number(inventory.resumo?.itensContados || 0)
+        itensContados: Number(inventory.resumo?.itensContados || 0),
+        posicoesFinalizadas: Number(inventory.resumo?.posicoesFinalizadas || 0)
       }))
       .sort((a, b) => a.id - b.id)
   }, [inventories])
-
-  const maxAcuracidade = 100
 
   useEffect(() => {
     loadInventories()
@@ -130,28 +128,26 @@ function FinishedInventoriesPage() {
             )}
 
             {chartData.length > 0 && (
-              <div className="history-chart">
-                {chartData.map((item) => {
-                  const height = Math.max(
-                    4,
-                    (item.acuracidade / maxAcuracidade) * 100
-                  )
-
-                  return (
-                    <div key={item.id} className="history-chart-column">
-                      <div className="history-chart-bar-area">
-                        <div
-                          className="history-chart-bar"
-                          style={{ height: `${height}%` }}
-                          title={`${item.acuracidade.toFixed(2)}%`}
-                        />
-                      </div>
-
-                      <strong>{item.acuracidade.toFixed(2)}%</strong>
-                      <span>{item.data}</span>
+              <div className="history-bar-chart">
+                {chartData.map((item) => (
+                  <div key={item.id} className="history-bar-row">
+                    <div className="history-bar-label">
+                      <strong>{item.data}</strong>
+                      <span>{item.deposito}</span>
                     </div>
-                  )
-                })}
+
+                    <div className="history-bar-track">
+                      <div
+                        className="history-bar-fill"
+                        style={{ width: `${item.acuracidade}%` }}
+                      />
+                    </div>
+
+                    <div className="history-bar-value">
+                      {item.acuracidade.toFixed(2)}%
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </section>
@@ -194,7 +190,9 @@ function FinishedInventoriesPage() {
                     </p>
                     <p>
                       Posições finalizadas:{" "}
-                      <strong>{inventory.resumo?.posicoesFinalizadas || 0}</strong>
+                      <strong>
+                        {inventory.resumo?.posicoesFinalizadas || 0}
+                      </strong>
                     </p>
                   </div>
 
