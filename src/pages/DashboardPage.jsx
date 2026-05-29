@@ -72,9 +72,9 @@ function DashboardPage() {
         </div>
 
         <div className="card metric-card">
-          <h3>Total de itens</h3>
-          <p className="metric-value">{resumo.totalItens}</p>
-          <span>Grandeza total do inventário</span>
+          <h3>Projeção final</h3>
+          <p className="metric-value">{resumo.projecaoFinal}%</p>
+          <span>Tendência com base no realizado</span>
         </div>
 
         <div className="card metric-card">
@@ -84,35 +84,35 @@ function DashboardPage() {
         </div>
 
         <div className="card metric-card">
-          <h3>Itens extras</h3>
-          <p className="metric-value">{resumo.itensExtras}</p>
-          <span>Encontrados a mais</span>
+          <h3>Posições finalizadas</h3>
+          <p className="metric-value">{resumo.posicoesFinalizadas}</p>
+          <span>{resumo.percentualPosicoesContadas}% das posições</span>
         </div>
       </div>
 
       <div className="dashboard-grid">
         <div className="card metric-card">
-          <h3>Itens avaliados</h3>
-          <p className="metric-value">{resumo.totalItensAvaliados}</p>
-          <span>Base da acuracidade</span>
+          <h3>Total de itens</h3>
+          <p className="metric-value">{resumo.totalItens}</p>
+          <span>Grandeza do inventário</span>
         </div>
 
         <div className="card metric-card">
-          <h3>Itens corretos</h3>
-          <p className="metric-value">{resumo.itensCorretosAvaliados}</p>
-          <span>Nas posições finalizadas</span>
+          <h3>Itens extras</h3>
+          <p className="metric-value">{resumo.itensExtras}</p>
+          <span>Encontrados a mais</span>
+        </div>
+
+        <div className="card metric-card">
+          <h3>Divergências abertas</h3>
+          <p className="metric-value">{resumo.divergenciasAbertas}</p>
+          <span>Aguardando recontagem</span>
         </div>
 
         <div className="card metric-card">
           <h3>Itens divergentes</h3>
           <p className="metric-value">{resumo.itensDivergentesAvaliados}</p>
           <span>Nas posições finalizadas</span>
-        </div>
-
-        <div className="card metric-card">
-          <h3>Posições finalizadas</h3>
-          <p className="metric-value">{resumo.posicoesFinalizadas}</p>
-          <span>{resumo.percentualPosicoesContadas}% das posições</span>
         </div>
       </div>
 
@@ -166,6 +166,8 @@ function DashboardPage() {
           <p><strong>Itens divergentes:</strong> {resumo.itensDivergentesAvaliados}</p>
           <p><strong>Itens extras:</strong> {resumo.itensExtras}</p>
           <p><strong>Acuracidade atual:</strong> {resumo.acuracidadeAtual}%</p>
+          <p><strong>Projeção final:</strong> {resumo.projecaoFinal}%</p>
+          <p><strong>Divergências abertas:</strong> {resumo.divergenciasAbertas}</p>
         </div>
       </div>
 
@@ -188,6 +190,7 @@ function DashboardPage() {
                   <th>% Acerto</th>
                 </tr>
               </thead>
+
               <tbody>
                 {rankingOperadores.map((item) => (
                   <tr key={item.operador}>
