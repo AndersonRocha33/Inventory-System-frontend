@@ -101,23 +101,31 @@ function PositionsPage() {
   }
 
   async function finishInventory() {
-    const confirmed = window.confirm("Deseja finalizar este inventário?")
+  const pendentes = positions.filter((p) => p.status === "pendente").length
+  const andamento = positions.filter((p) => p.status === "contando").length
+  const recontagem = positions.filter((p) => p.status === "recontagem").length
 
-    if (!confirmed) return
+  const confirmed = window.confirm(
+    pendentes + andamento + recontagem > 0
+      ? `Este inventário ainda possui pendências:\n\nPendentes: ${pendentes}\nEm andamento: ${andamento}\nRecontagem: ${recontagem}\n\nDeseja finalizar mesmo assim?`
+      : "Deseja finalizar este inventário?"
+  )
 
-    try {
-      await api.post(`/${inventarioId}/finish`)
-      setMessage("Inventário finalizado")
-      await loadPositions()
-    } catch (error) {
-      setMessage(
-        error.response?.data?.details ||
-          error.response?.data?.error ||
-          error.message ||
-          "Erro ao finalizar inventário"
-      )
-    }
+  if (!confirmed) return
+
+  try {
+    const response = await api.post(`/${inventarioId}/finish`)
+    setMessage(response.data.message || "Inventário finalizado")
+    await loadPositions()
+  } catch (error) {
+    setMessage(
+      error.response?.data?.details ||
+        error.response?.data?.error ||
+        error.message ||
+        "Erro ao finalizar inventário"
+    )
   }
+}
 
   function goBack() {
     window.location.href = `/?inventarioId=${inventarioId}&operador=${encodeURIComponent(

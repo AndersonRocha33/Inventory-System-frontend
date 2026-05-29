@@ -175,29 +175,38 @@ function InventoryPage() {
   }
 
   async function finishSelectedInventory() {
-    if (!inventarioId) {
-      setMessage("Selecione um inventário")
-      return
-    }
-
-    const confirmed = window.confirm("Deseja finalizar este inventário?")
-    if (!confirmed) return
-
-    try {
-      await api.post(`/${inventarioId}/finish`)
-      setMessage("Inventário finalizado e arquivado")
-
-      await loadInventories()
-      await loadPositions()
-    } catch (error) {
-      setMessage(
-        error.response?.data?.details ||
-          error.response?.data?.error ||
-          error.message ||
-          "Erro ao finalizar inventário"
-      )
-    }
+  if (!inventarioId) {
+    setMessage("Selecione um inventário")
+    return
   }
+
+  const pendencias =
+    stats.pendentes + stats.andamento + stats.recontagem
+
+  const confirmed = window.confirm(
+    pendencias > 0
+      ? `Este inventário ainda possui pendências:\n\nPendentes: ${stats.pendentes}\nEm andamento: ${stats.andamento}\nRecontagem: ${stats.recontagem}\n\nDeseja finalizar mesmo assim?`
+      : "Deseja finalizar este inventário?"
+  )
+
+  if (!confirmed) return
+
+  try {
+    const response = await api.post(`/${inventarioId}/finish`)
+
+    setMessage(response.data.message || "Inventário finalizado")
+
+    await loadInventories()
+    await loadPositions()
+  } catch (error) {
+    setMessage(
+      error.response?.data?.details ||
+        error.response?.data?.error ||
+        error.message ||
+        "Erro ao finalizar inventário"
+    )
+  }
+}
 
   async function deleteSelectedInventory() {
     if (!inventarioId) {

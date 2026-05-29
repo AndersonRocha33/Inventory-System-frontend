@@ -68,6 +68,25 @@ function FinishedInventoriesPage() {
     )
   }
 
+  async function reopenInventory(inventarioId) {
+  const confirmed = window.confirm("Deseja reabrir este inventário?")
+
+  if (!confirmed) return
+
+  try {
+    await api.post(`/${inventarioId}/reopen`)
+    setMessage("Inventário reaberto com sucesso")
+    await loadInventories()
+  } catch (error) {
+    setMessage(
+      error.response?.data?.details ||
+        error.response?.data?.error ||
+        error.message ||
+        "Erro ao reabrir inventário"
+    )
+  }
+}
+
   function goBack() {
     window.location.href = "/"
   }
@@ -288,16 +307,23 @@ function FinishedInventoriesPage() {
 
                   <div className="mobile-actions-row">
                     <button onClick={() => openDashboard(inventory.id)}>
-                      Ver dashboard
+                         Ver dashboard
+                     </button>
+
+                     <button
+                      className="secondary-button"
+                          onClick={() => openHistory(inventory.id)}
+  >
+                       Ver histórico
                     </button>
 
-                    <button
-                      className="secondary-button"
-                      onClick={() => openHistory(inventory.id)}
-                    >
-                      Ver histórico
-                    </button>
-                  </div>
+                         <button
+                           className="secondary-button"
+                           onClick={() => reopenInventory(inventory.id)}
+  >
+                           Reabrir
+                          </button>
+                    </div>
                 </div>
               ))}
             </div>
