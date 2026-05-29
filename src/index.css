@@ -1150,4 +1150,51 @@ strong {
     width: 100%;
   }
 }
+
+.history-chart {
+  display: flex;
+  gap: 18px;
+  align-items: flex-end;
+  min-height: 280px;
+  overflow-x: auto;
+  padding: 20px 8px 8px;
+}
+
+.history-chart-column {
+  min-width: 90px;
+  height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.history-chart-bar-area {
+  width: 42px;
+  height: 180px;
+  background: var(--spot-card-dark);
+  border: 1px solid var(--spot-border);
+  border-radius: 14px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.history-chart-bar {
+  width: 100%;
+  background: var(--spot-primary);
+  border-radius: 14px 14px 0 0;
+}
+
+.history-chart-column strong {
+  color: var(--spot-primary);
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.history-chart-column span {
+  font-size: 13px;
+  text-align: center;
+}
 }

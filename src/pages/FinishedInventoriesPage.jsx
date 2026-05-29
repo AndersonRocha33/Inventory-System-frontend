@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import api from "../services/api"
 import "../index.css"
 
@@ -10,17 +10,39 @@ function formatDate(value) {
 function FinishedInventoriesPage() {
   const [inventories, setInventories] = useState([])
   const [message, setMessage] = useState("")
+  const [loading, setLoading] = useState(true)
 
   async function loadInventories() {
     try {
+      setLoading(true)
+
       const response = await api.get("/")
+
       const finished = response.data.filter(
         (inventory) =>
           inventory.status === "finalizado" ||
           inventory.arquivado === true
       )
 
-      setInventories(finished)
+      const inventoriesWithReport = await Promise.all(
+        finished.map(async (inventory) => {
+          try {
+            const reportResponse = await api.get(`/${inventory.id}/report`)
+
+            return {
+              ...inventory,
+              resumo: reportResponse.data.resumo
+            }
+          } catch {
+            return {
+              ...inventory,
+              resumo: null
+            }
+          }
+        })
+      )
+
+      setInventories(inventoriesWithReport)
     } catch (error) {
       setMessage(
         error.response?.data?.details ||
@@ -28,6 +50,8 @@ function FinishedInventoriesPage() {
           error.message ||
           "Erro ao carregar inventários finalizados"
       )
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -48,6 +72,20 @@ function FinishedInventoriesPage() {
   function goBack() {
     window.location.href = "/"
   }
+
+  const chartData = useMemo(() => {
+    return inventories
+      .map((inventory) => ({
+        id: inventory.id,
+        data: formatDate(inventory.data_inicio),
+        acuracidade: Number(inventory.resumo?.acuracidadeAtual || 0),
+        posicoes: Number(inventory.resumo?.posicoesFinalizadas || 0),
+        itens: Number(inventory.resumo?.itensContados || 0)
+      }))
+      .sort((a, b) => a.id - b.id)
+  }, [inventories])
+
+  const maxAcuracidade = 100
 
   useEffect(() => {
     loadInventories()
@@ -71,50 +109,113 @@ function FinishedInventoriesPage() {
 
       {message && <div className="toast-message">{message}</div>}
 
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <h3>Lista de inventários</h3>
-            <p>{inventories.length} inventário(s) finalizado(s)</p>
-          </div>
-        </div>
+      {loading && (
+        <section className="panel">
+          <p>Carregando histórico...</p>
+        </section>
+      )}
 
-        <div className="positions-grid">
-          {inventories.map((inventory) => (
-            <div key={inventory.id} className="position-card">
-              <div className="position-card-top">
-                <div>
-                  <strong>{formatDate(inventory.data_inicio)}</strong>
-                  <span className="status-badge status-finalizado">
-                    Finalizado
-                  </span>
-                </div>
-
-                <span className="phase-pill">ID {inventory.id}</span>
-              </div>
-
-              <div className="position-meta">
-                <p>Depósito: {inventory.deposito || "-"}</p>
-                <p>Cliente: {inventory.cliente || "-"}</p>
-                <p>Finalizado em: {formatDate(inventory.finalizado_em)}</p>
-              </div>
-
-              <div className="mobile-actions-row">
-                <button onClick={() => openDashboard(inventory.id)}>
-                  Ver dashboard
-                </button>
-
-                <button
-                  className="secondary-button"
-                  onClick={() => openHistory(inventory.id)}
-                >
-                  Ver histórico
-                </button>
+      {!loading && (
+        <>
+          <section className="panel">
+            <div className="panel-header">
+              <div>
+                <h3>Evolução da acuracidade</h3>
+                <p>Comparativo dos inventários finalizados por data.</p>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+
+            {chartData.length === 0 && (
+              <p>Nenhum inventário finalizado encontrado.</p>
+            )}
+
+            {chartData.length > 0 && (
+              <div className="history-chart">
+                {chartData.map((item) => {
+                  const height = Math.max(
+                    4,
+                    (item.acuracidade / maxAcuracidade) * 100
+                  )
+
+                  return (
+                    <div key={item.id} className="history-chart-column">
+                      <div className="history-chart-bar-area">
+                        <div
+                          className="history-chart-bar"
+                          style={{ height: `${height}%` }}
+                          title={`${item.acuracidade.toFixed(2)}%`}
+                        />
+                      </div>
+
+                      <strong>{item.acuracidade.toFixed(2)}%</strong>
+                      <span>{item.data}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+
+          <section className="panel">
+            <div className="panel-header">
+              <div>
+                <h3>Lista de inventários</h3>
+                <p>{inventories.length} inventário(s) finalizado(s)</p>
+              </div>
+            </div>
+
+            <div className="positions-grid">
+              {inventories.map((inventory) => (
+                <div key={inventory.id} className="position-card">
+                  <div className="position-card-top">
+                    <div>
+                      <strong>{formatDate(inventory.data_inicio)}</strong>
+                      <span className="status-badge status-finalizado">
+                        Finalizado
+                      </span>
+                    </div>
+
+                    <span className="phase-pill">ID {inventory.id}</span>
+                  </div>
+
+                  <div className="position-meta">
+                    <p>Depósito: {inventory.deposito || "-"}</p>
+                    <p>Cliente: {inventory.cliente || "-"}</p>
+                    <p>Finalizado em: {formatDate(inventory.finalizado_em)}</p>
+                    <p>
+                      Acuracidade:{" "}
+                      <strong>
+                        {inventory.resumo?.acuracidadeAtual || "0.00"}%
+                      </strong>
+                    </p>
+                    <p>
+                      Itens contados:{" "}
+                      <strong>{inventory.resumo?.itensContados || 0}</strong>
+                    </p>
+                    <p>
+                      Posições finalizadas:{" "}
+                      <strong>{inventory.resumo?.posicoesFinalizadas || 0}</strong>
+                    </p>
+                  </div>
+
+                  <div className="mobile-actions-row">
+                    <button onClick={() => openDashboard(inventory.id)}>
+                      Ver dashboard
+                    </button>
+
+                    <button
+                      className="secondary-button"
+                      onClick={() => openHistory(inventory.id)}
+                    >
+                      Ver histórico
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </div>
   )
 }
