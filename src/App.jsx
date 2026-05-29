@@ -226,10 +226,20 @@ function InventoryPage() {
 
   const stats = useMemo(() => {
     const total = positions.length
-    const finalizado = positions.filter((p) => p.status === "finalizado").length
-    const percentual = total > 0 ? Math.round((finalizado / total) * 100) : 0
+    const pendentes = positions.filter((p) => p.status === "pendente").length
+    const andamento = positions.filter((p) => p.status === "contando").length
+    const recontagem = positions.filter((p) => p.status === "recontagem").length
+    const finalizadas = positions.filter((p) => p.status === "finalizado").length
+    const percentual = total > 0 ? Math.round((finalizadas / total) * 100) : 0
 
-    return { total, finalizado, percentual }
+    return {
+      total,
+      pendentes,
+      andamento,
+      recontagem,
+      finalizadas,
+      percentual
+    }
   }, [positions])
 
   useEffect(() => {
@@ -310,6 +320,38 @@ function InventoryPage() {
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: `${stats.percentual}%` }} />
             </div>
+          </div>
+        </section>
+
+        <section className="summary-grid">
+          <div className="summary-card">
+            <span>Total</span>
+            <strong>{stats.total}</strong>
+            <p>posições</p>
+          </div>
+
+          <div className="summary-card">
+            <span>Pendentes</span>
+            <strong>{stats.pendentes}</strong>
+            <p>aguardando</p>
+          </div>
+
+          <div className="summary-card">
+            <span>Em contagem</span>
+            <strong>{stats.andamento}</strong>
+            <p>em andamento</p>
+          </div>
+
+          <div className="summary-card">
+            <span>Recontagem</span>
+            <strong>{stats.recontagem}</strong>
+            <p>com divergência</p>
+          </div>
+
+          <div className="summary-card">
+            <span>Finalizadas</span>
+            <strong>{stats.finalizadas}</strong>
+            <p>concluídas</p>
           </div>
         </section>
 
