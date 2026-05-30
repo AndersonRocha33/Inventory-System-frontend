@@ -1523,4 +1523,34 @@ strong {
     font-size: 44px;
   }
 }
+
+.position-select-card {
+  text-align: left;
+  background: var(--spot-card-dark);
+  border: 1px solid var(--spot-border);
+  border-radius: 18px;
+  padding: 18px;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.position-select-card strong {
+  font-size: 24px;
+}
+
+.position-select-card span {
+  color: var(--spot-muted);
+  font-weight: 800;
+}
+
+.position-select-card-active {
+  border: 2px solid var(--spot-primary);
+  background: rgba(245, 255, 79, 0.08);
+}
+
+.position-select-card-active span {
+  color: var(--spot-primary);
+}
 }

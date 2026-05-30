@@ -7,6 +7,7 @@ import MobileCountPage from "./pages/MobileCountPage"
 import PositionsPage from "./pages/PositionsPage"
 import FinishedInventoriesPage from "./pages/FinishedInventoriesPage"
 import TvDashboardPage from "./pages/TvDashboardPage"
+import SelectPositionsPage from "./pages/SelectPositionsPage"
 import "./index.css"
 
 function formatDate(value) {
@@ -168,6 +169,17 @@ function InventoryPage() {
     }
 
     window.location.href = `/positions?inventarioId=${inventarioId}&operador=${encodeURIComponent(
+      operator
+    )}`
+  }
+
+  function openSelectPositionsPage() {
+    if (!inventarioId) {
+      setMessage("Selecione um inventário")
+      return
+    }
+
+    window.location.href = `/select-positions?inventarioId=${inventarioId}&operador=${encodeURIComponent(
       operator
     )}`
   }
@@ -495,6 +507,10 @@ function InventoryPage() {
                 Abrir posições
               </button>
 
+              <button onClick={openSelectPositionsPage}>
+                Selecionar posições
+              </button>
+
               <button onClick={finishSelectedInventory}>
                 Finalizar
               </button>
@@ -521,6 +537,7 @@ function App() {
   if (window.location.pathname === "/positions") return <PositionsPage />
   if (window.location.pathname === "/finished-inventories") return <FinishedInventoriesPage />
   if (window.location.pathname === "/tv-dashboard") return <TvDashboardPage />
+  if (window.location.pathname === "/select-positions") return <SelectPositionsPage />
 
   return <InventoryPage />
 }
