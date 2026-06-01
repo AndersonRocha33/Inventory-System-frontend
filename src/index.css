@@ -950,8 +950,9 @@ strong {
   .positions-header-actions {
     flex-direction: column;
   }
+}
 
- /* DASHBOARD EXECUTIVO ISOLADO */
+/* DASHBOARD EXECUTIVO ISOLADO */
 
 .exec-dashboard-page {
   min-height: 100vh;
@@ -1086,6 +1087,4 @@ strong {
   .exec-card strong {
     font-size: 46px;
   }
-}
-
 }
