@@ -27,6 +27,7 @@ function InventoryPage() {
   const [dataInventario, setDataInventario] = useState("")
   const [message, setMessage] = useState("")
   const [loadingUpload, setLoadingUpload] = useState(false)
+  const [inventoryMode, setInventoryMode] = useState("geral")
 
   const apiBaseUrl = import.meta.env.VITE_API_URL
   const backendBaseUrl = apiBaseUrl.replace(/\/inventory$/, "")
@@ -98,6 +99,12 @@ function InventoryPage() {
 
       await loadInventories()
       await loadPositions(novoInventarioId)
+
+      if (inventoryMode === "ciclico") {
+        window.location.href = `/select-positions?inventarioId=${novoInventarioId}&operador=${encodeURIComponent(
+          operator
+        )}`
+      }
     } catch (error) {
       if (error.response?.status === 401) {
         logout()
@@ -375,23 +382,9 @@ function InventoryPage() {
       </aside>
 
       <main className="main-content">
-        <header className="app-header">
+        <section className="inventory-topbar">
           <div>
-            <p className="eyebrow">Sistema de inventário</p>
-            <h2>Controle de posições</h2>
-            <span>
-              Selecione o inventário, compartilhe com os operadores e acompanhe o andamento.
-            </span>
-          </div>
-
-          <button onClick={copyShareLink}>Compartilhar inventário</button>
-        </header>
-
-        {message && <div className="toast-message">{message}</div>}
-
-        <section className="live-panel">
-          <div>
-            <span>Inventário ativo</span>
+            <span>Inventário ativo:</span>
             <strong>
               {selectedInventory
                 ? `${formatDate(selectedInventory.data_inicio)} - ${selectedInventory.deposito || "-"}`
@@ -399,9 +392,15 @@ function InventoryPage() {
             </strong>
           </div>
 
-          <div className="live-progress">
+          <button onClick={copyShareLink} className="topbar-link-button">
+            Compartilhar inventário
+          </button>
+        </section>
+
+        <section className="live-panel compact-live-panel">
+          <div className="live-progress full-progress">
             <div>
-              <span>Progresso</span>
+              <span>Progresso geral</span>
               <strong>{stats.percentual}%</strong>
             </div>
 
@@ -411,9 +410,11 @@ function InventoryPage() {
           </div>
         </section>
 
+        {message && <div className="toast-message">{message}</div>}
+
         <section className="summary-grid">
           <div className="summary-card">
-            <span>Total</span>
+            <span>Total posições</span>
             <strong>{stats.total}</strong>
             <p>posições</p>
           </div>
@@ -469,6 +470,34 @@ function InventoryPage() {
             <button onClick={uploadInventoryFile} disabled={loadingUpload}>
               {loadingUpload ? "Enviando..." : "Criar inventário"}
             </button>
+
+            <div className="inventory-mode-grid">
+              <button
+                type="button"
+                className={`mode-card mode-general ${
+                  inventoryMode === "geral" ? "mode-card-active" : ""
+                }`}
+                onClick={() => setInventoryMode("geral")}
+              >
+                <strong>Inventário Geral</strong>
+                <span>Todas as posições do CSV</span>
+              </button>
+
+              <button
+                type="button"
+                className={`mode-card mode-cycle ${
+                  inventoryMode === "ciclico" ? "mode-card-active" : ""
+                }`}
+                onClick={() => setInventoryMode("ciclico")}
+              >
+                <strong>Inventário Cíclico</strong>
+                <span>Selecionar posições depois</span>
+              </button>
+            </div>
+
+            <p className="mode-helper">
+              No inventário cíclico você poderá selecionar apenas as posições desejadas.
+            </p>
           </div>
 
           <div className="panel">
@@ -485,7 +514,7 @@ function InventoryPage() {
               onChange={(e) => setInventarioId(e.target.value)}
               className="filter-select"
             >
-              <option value="">Selecione</option>
+              <option value="">Selecione um inventário</option>
 
               {activeInventories.map((inventory) => (
                 <option key={inventory.id} value={inventory.id}>
@@ -507,15 +536,15 @@ function InventoryPage() {
                 Abrir posições
               </button>
 
-              <button onClick={openSelectPositionsPage}>
+              <button onClick={openSelectPositionsPage} className="outline-action-button">
                 Selecionar posições
               </button>
 
               <button onClick={finishSelectedInventory}>
-                Finalizar
+                Finalizar inventário
               </button>
 
-              <button onClick={deleteSelectedInventory} className="danger-button action-grid-full">
+              <button onClick={deleteSelectedInventory} className="danger-button">
                 Excluir inventário
               </button>
             </div>
