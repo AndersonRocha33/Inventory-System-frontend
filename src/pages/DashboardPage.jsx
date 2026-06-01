@@ -1,4 +1,16 @@
 import { useCallback, useEffect, useState } from "react"
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  CheckCircle,
+  ClipboardCheck,
+  Package,
+  PackagePlus,
+  Target,
+  TrendingUp,
+  Users
+} from "lucide-react"
 import api from "../services/api"
 import "../index.css"
 
@@ -20,18 +32,13 @@ function DashboardPage() {
   }, [inventarioId])
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      loadDashboard()
-    }, 0)
+    loadDashboard()
 
     const interval = setInterval(() => {
       loadDashboard()
     }, 30000)
 
-    return () => {
-      clearTimeout(timeout)
-      clearInterval(interval)
-    }
+    return () => clearInterval(interval)
   }, [loadDashboard])
 
   if (error) {
@@ -68,89 +75,31 @@ function DashboardPage() {
       </div>
 
       <div className="dashboard-grid">
-        <div className="card metric-card">
-          <h3>Acuracidade atual</h3>
-          <p className="metric-value">{resumo.acuracidadeAtual}%</p>
-          <span>Somente posições finalizadas</span>
-        </div>
-
-        <div className="card metric-card">
-          <h3>Projeção final</h3>
-          <p className="metric-value">{resumo.projecaoFinal}%</p>
-          <span>Tendência com base no realizado</span>
-        </div>
-
-        <div className="card metric-card">
-          <h3>Itens contados</h3>
-          <p className="metric-value">{resumo.itensContados}</p>
-          <span>{resumo.percentualItensContados}% do total</span>
-        </div>
-
-        <div className="card metric-card">
-          <h3>Posições finalizadas</h3>
-          <p className="metric-value">{resumo.posicoesFinalizadas}</p>
-          <span>{resumo.percentualPosicoesContadas}% das posições</span>
-        </div>
+        <Metric icon={<Target />} title="Acuracidade atual" value={`${resumo.acuracidadeAtual}%`} subtitle="Somente posições finalizadas" />
+        <Metric icon={<TrendingUp />} title="Projeção final" value={`${resumo.projecaoFinal}%`} subtitle="Tendência com base no realizado" />
+        <Metric icon={<Package />} title="Itens contados" value={resumo.itensContados} subtitle={`${resumo.percentualItensContados}% do total`} />
+        <Metric icon={<ClipboardCheck />} title="Posições finalizadas" value={resumo.posicoesFinalizadas} subtitle={`${resumo.percentualPosicoesContadas}% das posições`} />
       </div>
 
       <div className="dashboard-grid">
-        <div className="card metric-card">
-          <h3>Total de itens</h3>
-          <p className="metric-value">{resumo.totalItens}</p>
-          <span>Grandeza do inventário</span>
-        </div>
-
-        <div className="card metric-card">
-          <h3>Itens extras</h3>
-          <p className="metric-value">{resumo.itensExtras}</p>
-          <span>Encontrados a mais</span>
-        </div>
-
-        <div className="card metric-card">
-          <h3>Divergências abertas</h3>
-          <p className="metric-value">{resumo.divergenciasAbertas}</p>
-          <span>Aguardando recontagem</span>
-        </div>
-
-        <div className="card metric-card">
-          <h3>Itens divergentes</h3>
-          <p className="metric-value">{resumo.itensDivergentesAvaliados}</p>
-          <span>Nas posições finalizadas</span>
-        </div>
+        <Metric icon={<PackagePlus />} title="Total de itens" value={resumo.totalItens} subtitle="Grandeza do inventário" />
+        <Metric icon={<CheckCircle />} title="Itens extras" value={resumo.itensExtras} subtitle="Encontrados a mais" />
+        <Metric icon={<AlertTriangle />} title="Divergências abertas" value={resumo.divergenciasAbertas} subtitle="Aguardando recontagem" />
+        <Metric icon={<Activity />} title="Itens divergentes" value={resumo.itensDivergentesAvaliados} subtitle="Nas posições finalizadas" />
       </div>
 
       <div className="layout">
-        <div className="card">
-          <h2>Avanço de Itens</h2>
-          <p>
-            {resumo.itensContados} de {resumo.totalItens} itens contados
-          </p>
+        <ProgressCard
+          title="Avanço de Itens"
+          text={`${resumo.itensContados} de ${resumo.totalItens} itens contados`}
+          percent={resumo.percentualItensContados}
+        />
 
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${resumo.percentualItensContados}%` }}
-            />
-          </div>
-
-          <p>{resumo.percentualItensContados}%</p>
-        </div>
-
-        <div className="card">
-          <h2>Avanço de Posições</h2>
-          <p>
-            {resumo.posicoesFinalizadas} de {resumo.totalPosicoes} posições finalizadas
-          </p>
-
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${resumo.percentualPosicoesContadas}%` }}
-            />
-          </div>
-
-          <p>{resumo.percentualPosicoesContadas}%</p>
-        </div>
+        <ProgressCard
+          title="Avanço de Posições"
+          text={`${resumo.posicoesFinalizadas} de ${resumo.totalPosicoes} posições finalizadas`}
+          percent={resumo.percentualPosicoesContadas}
+        />
       </div>
 
       <div className="layout">
@@ -175,7 +124,10 @@ function DashboardPage() {
       </div>
 
       <div className="card">
-        <h2>Ranking de Operadores</h2>
+        <h2 className="table-title">
+          <Users size={24} />
+          Ranking de Operadores
+        </h2>
 
         {rankingOperadores.length === 0 && (
           <p>Nenhuma contagem registrada ainda.</p>
@@ -209,6 +161,40 @@ function DashboardPage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function Metric({ icon, title, value, subtitle }) {
+  return (
+    <div className="card metric-card dashboard-metric-card">
+      <div className="dashboard-metric-icon">
+        {icon}
+      </div>
+
+      <div>
+        <h3>{title}</h3>
+        <p className="metric-value">{value}</p>
+        <span>{subtitle}</span>
+      </div>
+    </div>
+  )
+}
+
+function ProgressCard({ title, text, percent }) {
+  return (
+    <div className="card">
+      <h2>{title}</h2>
+      <p>{text}</p>
+
+      <div className="progress-bar">
+        <div
+          className="progress-fill"
+          style={{ width: `${Math.min(Number(percent), 100)}%` }}
+        />
+      </div>
+
+      <p>{percent}%</p>
     </div>
   )
 }
