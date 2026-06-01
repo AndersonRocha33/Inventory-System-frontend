@@ -1,16 +1,4 @@
 import { useCallback, useEffect, useState } from "react"
-import {
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  CheckCircle,
-  ClipboardCheck,
-  Package,
-  PackagePlus,
-  Target,
-  TrendingUp,
-  Users
-} from "lucide-react"
 import api from "../services/api"
 import "../index.css"
 
@@ -33,77 +21,53 @@ function DashboardPage() {
 
   useEffect(() => {
     loadDashboard()
-
-    const interval = setInterval(() => {
-      loadDashboard()
-    }, 30000)
-
+    const interval = setInterval(loadDashboard, 30000)
     return () => clearInterval(interval)
   }, [loadDashboard])
 
   if (error) {
-    return (
-      <div className="container">
-        <div className="card">
-          <h1>Dashboard</h1>
-          <p>{error}</p>
-        </div>
-      </div>
-    )
+    return <div className="exec-dashboard-page"><h1>{error}</h1></div>
   }
 
   if (!report) {
-    return (
-      <div className="container">
-        <div className="card">
-          <h1>Dashboard</h1>
-          <p>Carregando...</p>
-        </div>
-      </div>
-    )
+    return <div className="exec-dashboard-page"><h1>Carregando...</h1></div>
   }
 
   const { resumo, rankingOperadores } = report
 
   return (
-    <div className="container">
-      <div className="dashboard-title-row">
-        <div>
-          <p className="eyebrow">Gestão do inventário</p>
-          <h1>Dashboard Executivo</h1>
-        </div>
+    <div className="exec-dashboard-page">
+      <p className="exec-eyebrow">Gestão do inventário</p>
+      <h1 className="exec-title">Dashboard Executivo</h1>
+
+      <div className="exec-card-grid">
+        <Card destaque titulo="Acuracidade atual" valor={`${resumo.acuracidadeAtual}%`} texto="Somente posições finalizadas" />
+        <Card titulo="Itens contados" valor={resumo.itensContados} texto={`${resumo.percentualItensContados}% do total`} />
+        <Card titulo="Posições finalizadas" valor={`${resumo.posicoesFinalizadas}/${resumo.totalPosicoes}`} texto={`${resumo.percentualPosicoesContadas}% concluído`} />
+        <Card alerta titulo="Divergências abertas" valor={resumo.divergenciasAbertas} texto="Aguardando recontagem" />
+
+        <Card titulo="Total de itens" valor={resumo.totalItens} texto="Grandeza do inventário" />
+        <Card titulo="Itens extras" valor={resumo.itensExtras} texto="Encontrados a mais" />
+        <Card titulo="Itens divergentes" valor={resumo.itensDivergentesAvaliados} texto="Nas posições finalizadas" />
+        <Card titulo="Projeção final" valor={`${resumo.projecaoFinal}%`} texto="Tendência com base no realizado" />
       </div>
 
-      <div className="dashboard-grid">
-        <Metric icon={<Target />} title="Acuracidade atual" value={`${resumo.acuracidadeAtual}%`} subtitle="Somente posições finalizadas" />
-        <Metric icon={<TrendingUp />} title="Projeção final" value={`${resumo.projecaoFinal}%`} subtitle="Tendência com base no realizado" />
-        <Metric icon={<Package />} title="Itens contados" value={resumo.itensContados} subtitle={`${resumo.percentualItensContados}% do total`} />
-        <Metric icon={<ClipboardCheck />} title="Posições finalizadas" value={resumo.posicoesFinalizadas} subtitle={`${resumo.percentualPosicoesContadas}% das posições`} />
-      </div>
-
-      <div className="dashboard-grid">
-        <Metric icon={<PackagePlus />} title="Total de itens" value={resumo.totalItens} subtitle="Grandeza do inventário" />
-        <Metric icon={<CheckCircle />} title="Itens extras" value={resumo.itensExtras} subtitle="Encontrados a mais" />
-        <Metric icon={<AlertTriangle />} title="Divergências abertas" value={resumo.divergenciasAbertas} subtitle="Aguardando recontagem" />
-        <Metric icon={<Activity />} title="Itens divergentes" value={resumo.itensDivergentesAvaliados} subtitle="Nas posições finalizadas" />
-      </div>
-
-      <div className="layout">
+      <div className="exec-two-columns">
         <ProgressCard
-          title="Avanço de Itens"
-          text={`${resumo.itensContados} de ${resumo.totalItens} itens contados`}
-          percent={resumo.percentualItensContados}
+          titulo="Avanço de Itens"
+          texto={`${resumo.itensContados} de ${resumo.totalItens} itens contados`}
+          percentual={resumo.percentualItensContados}
         />
 
         <ProgressCard
-          title="Avanço de Posições"
-          text={`${resumo.posicoesFinalizadas} de ${resumo.totalPosicoes} posições finalizadas`}
-          percent={resumo.percentualPosicoesContadas}
+          titulo="Avanço de Posições"
+          texto={`${resumo.posicoesFinalizadas} de ${resumo.totalPosicoes} posições finalizadas`}
+          percentual={resumo.percentualPosicoesContadas}
         />
       </div>
 
-      <div className="layout">
-        <div className="card">
+      <div className="exec-two-columns">
+        <div className="exec-panel">
           <h2>Status das Posições</h2>
           <p><strong>Pendentes:</strong> {resumo.posicoesPendentes}</p>
           <p><strong>Em andamento:</strong> {resumo.posicoesEmAndamento}</p>
@@ -111,31 +75,13 @@ function DashboardPage() {
           <p><strong>Finalizadas:</strong> {resumo.posicoesFinalizadas}</p>
         </div>
 
-        <div className="card">
-          <h2>Base da Acuracidade Atual</h2>
-          <p><strong>Itens avaliados:</strong> {resumo.totalItensAvaliados}</p>
-          <p><strong>Itens corretos:</strong> {resumo.itensCorretosAvaliados}</p>
-          <p><strong>Itens divergentes:</strong> {resumo.itensDivergentesAvaliados}</p>
-          <p><strong>Itens extras:</strong> {resumo.itensExtras}</p>
-          <p><strong>Acuracidade atual:</strong> {resumo.acuracidadeAtual}%</p>
-          <p><strong>Projeção final:</strong> {resumo.projecaoFinal}%</p>
-          <p><strong>Divergências abertas:</strong> {resumo.divergenciasAbertas}</p>
-        </div>
-      </div>
+        <div className="exec-panel">
+          <h2>Ranking de Operadores</h2>
 
-      <div className="card">
-        <h2 className="table-title">
-          <Users size={24} />
-          Ranking de Operadores
-        </h2>
+          {rankingOperadores.length === 0 && <p>Nenhuma contagem registrada ainda.</p>}
 
-        {rankingOperadores.length === 0 && (
-          <p>Nenhuma contagem registrada ainda.</p>
-        )}
-
-        {rankingOperadores.length > 0 && (
-          <div className="table-wrapper">
-            <table className="report-table">
+          {rankingOperadores.length > 0 && (
+            <table className="exec-table">
               <thead>
                 <tr>
                   <th>Operador</th>
@@ -145,7 +91,6 @@ function DashboardPage() {
                   <th>% Acerto</th>
                 </tr>
               </thead>
-
               <tbody>
                 {rankingOperadores.map((item) => (
                   <tr key={item.operador}>
@@ -158,43 +103,34 @@ function DashboardPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-function Metric({ icon, title, value, subtitle }) {
+function Card({ titulo, valor, texto, destaque, alerta }) {
   return (
-    <div className="card metric-card dashboard-metric-card">
-      <div className="dashboard-metric-icon">
-        {icon}
-      </div>
-
-      <div>
-        <h3>{title}</h3>
-        <p className="metric-value">{value}</p>
-        <span>{subtitle}</span>
-      </div>
+    <div className={`exec-card ${destaque ? "exec-card-destaque" : ""} ${alerta ? "exec-card-alerta" : ""}`}>
+      <h3>{titulo}</h3>
+      <strong>{valor}</strong>
+      <p>{texto}</p>
     </div>
   )
 }
 
-function ProgressCard({ title, text, percent }) {
+function ProgressCard({ titulo, texto, percentual }) {
   return (
-    <div className="card">
-      <h2>{title}</h2>
-      <p>{text}</p>
+    <div className="exec-panel">
+      <h2>{titulo}</h2>
+      <p>{texto}</p>
 
-      <div className="progress-bar">
-        <div
-          className="progress-fill"
-          style={{ width: `${Math.min(Number(percent), 100)}%` }}
-        />
+      <div className="exec-progress">
+        <div style={{ width: `${Math.min(Number(percentual), 100)}%` }} />
       </div>
 
-      <p>{percent}%</p>
+      <p>{percentual}%</p>
     </div>
   )
 }
