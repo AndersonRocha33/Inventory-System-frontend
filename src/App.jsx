@@ -1,4 +1,32 @@
 import { useEffect, useMemo, useState } from "react"
+import {
+  BarChart3,
+  Box,
+  CalendarDays,
+  CheckCircle,
+  ClipboardList,
+  Clock3,
+  FilePlus2,
+  FileSpreadsheet,
+  FileText,
+  Flag,
+  History,
+  Info,
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  Monitor,
+  PackageCheck,
+  PackageOpen,
+  PlusCircle,
+  RotateCcw,
+  Trash2,
+  Upload,
+  UserCircle,
+  Warehouse,
+  AlertTriangle
+} from "lucide-react"
+
 import api from "./services/api"
 import AuthPage from "./pages/AuthPage"
 import DashboardPage from "./pages/DashboardPage"
@@ -358,24 +386,55 @@ function InventoryPage() {
         <div className="brand">
           <div className="brand-icon">✓</div>
           <div>
-            <h1>SpotInventory</h1>
+            <h1>
+              Spot<span>Inventory</span>
+            </h1>
             <p>Inventário operacional</p>
           </div>
         </div>
 
         <div className="sidebar-user">
-          <span>Usuário logado</span>
-          <strong>{loggedUser?.nome || "-"}</strong>
+          <div>
+            <span>Usuário logado</span>
+            <strong>{loggedUser?.nome || "-"}</strong>
+          </div>
+
+          <UserCircle size={30} />
         </div>
 
         <nav className="sidebar-actions">
-          <button onClick={openDashboard}>Dashboard</button>
-          <button onClick={openTvDashboard}>TV/CD</button>
-          <button onClick={openHistoryReport}>Histórico</button>
-          <button onClick={openFinishedInventories}>Inventários finalizados</button>
-          <button onClick={exportCsv}>Exportar CSV</button>
-          <button onClick={exportExcel}>Exportar Excel</button>
-          <button onClick={logout} className="secondary-button">
+          <button onClick={openDashboard}>
+            <BarChart3 size={24} />
+            Dashboard
+          </button>
+
+          <button onClick={openTvDashboard}>
+            <Monitor size={24} />
+            TV/CD
+          </button>
+
+          <button onClick={openHistoryReport}>
+            <History size={24} />
+            Histórico
+          </button>
+
+          <button onClick={openFinishedInventories}>
+            <PackageCheck size={24} />
+            Inventários finalizados
+          </button>
+
+          <button onClick={exportCsv}>
+            <FileText size={24} />
+            Exportar CSV
+          </button>
+
+          <button onClick={exportExcel}>
+            <FileSpreadsheet size={24} />
+            Exportar Excel
+          </button>
+
+          <button onClick={logout} className="secondary-button logout-button">
+            <LogOut size={24} />
             Sair
           </button>
         </nav>
@@ -387,7 +446,7 @@ function InventoryPage() {
             <span>Inventário ativo:</span>
             <strong>
               {selectedInventory
-                ? `${formatDate(selectedInventory.data_inicio)} - ${selectedInventory.deposito || "-"}`
+                ? `${formatDate(selectedInventory.data_inicio)} - ${selectedInventory.deposito || "-"} - ID ${selectedInventory.id}`
                 : "Nenhum inventário selecionado"}
             </strong>
           </div>
@@ -397,10 +456,10 @@ function InventoryPage() {
           </button>
         </section>
 
-        <section className="live-panel compact-live-panel">
-          <div className="live-progress full-progress">
+        <section className="live-panel">
+          <div className="live-progress">
             <div>
-              <span>Progresso geral</span>
+              <span>Progresso geral {stats.percentual}%</span>
               <strong>{stats.percentual}%</strong>
             </div>
 
@@ -413,40 +472,49 @@ function InventoryPage() {
         {message && <div className="toast-message">{message}</div>}
 
         <section className="summary-grid">
-          <div className="summary-card">
-            <span>Total posições</span>
-            <strong>{stats.total}</strong>
-            <p>posições</p>
-          </div>
+          <MetricCard
+            icon={<Box size={40} />}
+            title="Total posições"
+            value={stats.total}
+            subtitle="posições"
+          />
 
-          <div className="summary-card">
-            <span>Pendentes</span>
-            <strong>{stats.pendentes}</strong>
-            <p>aguardando</p>
-          </div>
+          <MetricCard
+            icon={<Clock3 size={40} />}
+            title="Pendentes"
+            value={stats.pendentes}
+            subtitle="aguardando"
+          />
 
-          <div className="summary-card">
-            <span>Em contagem</span>
-            <strong>{stats.andamento}</strong>
-            <p>em andamento</p>
-          </div>
+          <MetricCard
+            icon={<RotateCcw size={40} />}
+            title="Em contagem"
+            value={stats.andamento}
+            subtitle="em andamento"
+          />
 
-          <div className="summary-card">
-            <span>Recontagem</span>
-            <strong>{stats.recontagem}</strong>
-            <p>com divergência</p>
-          </div>
+          <MetricCard
+            icon={<AlertTriangle size={40} />}
+            title="Recontagem"
+            value={stats.recontagem}
+            subtitle="com divergência"
+          />
 
-          <div className="summary-card">
-            <span>Finalizadas</span>
-            <strong>{stats.finalizadas}</strong>
-            <p>concluídas</p>
-          </div>
+          <MetricCard
+            icon={<CheckCircle size={40} />}
+            title="Finalizadas"
+            value={stats.finalizadas}
+            subtitle="concluídas"
+          />
         </section>
 
         <section className="content-grid">
           <div className="panel">
-            <div className="panel-header">
+            <div className="section-title-row">
+              <div className="section-icon">
+                <FilePlus2 size={32} />
+              </div>
+
               <div>
                 <h3>Novo inventário</h3>
                 <p>Carregue o CSV e informe a data de realização.</p>
@@ -454,20 +522,30 @@ function InventoryPage() {
             </div>
 
             <label>Data do inventário</label>
-            <input
-              type="date"
-              value={dataInventario}
-              onChange={(e) => setDataInventario(e.target.value)}
-            />
+            <div className="input-with-icon">
+              <input
+                type="date"
+                value={dataInventario}
+                onChange={(e) => setDataInventario(e.target.value)}
+              />
+              <CalendarDays size={22} />
+            </div>
 
             <label>Arquivo CSV</label>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={(e) => setUploadFile(e.target.files[0])}
-            />
+            <div className="file-row">
+              <div className="file-icon">
+                <Upload size={22} />
+              </div>
 
-            <button onClick={uploadInventoryFile} disabled={loadingUpload}>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={(e) => setUploadFile(e.target.files[0])}
+              />
+            </div>
+
+            <button className="button-with-icon create-button" onClick={uploadInventoryFile} disabled={loadingUpload}>
+              <PlusCircle size={22} />
               {loadingUpload ? "Enviando..." : "Criar inventário"}
             </button>
 
@@ -479,8 +557,14 @@ function InventoryPage() {
                 }`}
                 onClick={() => setInventoryMode("geral")}
               >
-                <strong>Inventário Geral</strong>
-                <span>Todas as posições do CSV</span>
+                <div className="mode-icon">
+                  <PackageOpen size={34} />
+                </div>
+
+                <div>
+                  <strong>Inventário Geral</strong>
+                  <span>Todas as posições do CSV</span>
+                </div>
               </button>
 
               <button
@@ -490,18 +574,29 @@ function InventoryPage() {
                 }`}
                 onClick={() => setInventoryMode("ciclico")}
               >
-                <strong>Inventário Cíclico</strong>
-                <span>Selecionar posições depois</span>
+                <div className="mode-icon">
+                  <ListChecks size={34} />
+                </div>
+
+                <div>
+                  <strong>Inventário Cíclico</strong>
+                  <span>Selecionar posições depois</span>
+                </div>
               </button>
             </div>
 
             <p className="mode-helper">
+              <Info size={16} />
               No inventário cíclico você poderá selecionar apenas as posições desejadas.
             </p>
           </div>
 
           <div className="panel">
-            <div className="panel-header">
+            <div className="section-title-row">
+              <div className="section-icon">
+                <ClipboardList size={32} />
+              </div>
+
               <div>
                 <h3>Inventário ativo</h3>
                 <p>Escolha o inventário e abra a tela de posições.</p>
@@ -532,25 +627,43 @@ function InventoryPage() {
             />
 
             <div className="action-grid">
-              <button onClick={openPositionsPage}>
+              <button onClick={openPositionsPage} className="button-with-icon">
+                <Warehouse size={24} />
                 Abrir posições
               </button>
 
-              <button onClick={openSelectPositionsPage} className="outline-action-button">
+              <button onClick={openSelectPositionsPage} className="button-with-icon outline-action-button">
+                <ListChecks size={24} />
                 Selecionar posições
               </button>
 
-              <button onClick={finishSelectedInventory}>
+              <button onClick={finishSelectedInventory} className="button-with-icon">
+                <Flag size={24} />
                 Finalizar inventário
               </button>
 
-              <button onClick={deleteSelectedInventory} className="danger-button">
+              <button onClick={deleteSelectedInventory} className="button-with-icon danger-button">
+                <Trash2 size={24} />
                 Excluir inventário
               </button>
             </div>
           </div>
         </section>
       </main>
+    </div>
+  )
+}
+
+function MetricCard({ icon, title, value, subtitle }) {
+  return (
+    <div className="summary-card metric-with-icon">
+      <div className="metric-icon">{icon}</div>
+
+      <div>
+        <span>{title}</span>
+        <strong>{value}</strong>
+        <p>{subtitle}</p>
+      </div>
     </div>
   )
 }
