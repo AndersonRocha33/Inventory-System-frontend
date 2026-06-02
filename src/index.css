@@ -1087,4 +1087,252 @@ strong {
   .exec-card strong {
     font-size: 46px;
   }
+
+}
+
+/* PAINEL CD */
+
+.cd-panel-page {
+  min-height: 100vh;
+  background: #111827;
+  color: #ffffff;
+  padding: 34px;
+}
+
+.cd-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.cd-eyebrow {
+  color: var(--spot-primary);
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  margin: 0 0 8px;
+}
+
+.cd-panel-header h1 {
+  font-size: 58px;
+  margin: 0 0 8px;
+}
+
+.cd-panel-header span {
+  color: var(--spot-muted);
+  font-size: 22px;
+}
+
+.cd-live-badge {
+  border: 1px solid var(--spot-primary);
+  color: var(--spot-primary);
+  border-radius: 999px;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+  font-size: 20px;
+}
+
+.cd-progress-card {
+  background: var(--spot-card);
+  border: 1px solid var(--spot-border);
+  border-radius: 26px;
+  padding: 26px;
+  margin-bottom: 24px;
+}
+
+.cd-progress-card > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 16px;
+}
+
+.cd-progress-card strong {
+  color: var(--spot-primary);
+}
+
+.cd-progress-card p {
+  font-size: 20px;
+  margin: 16px 0 0;
+}
+
+.cd-progress-bar {
+  height: 34px;
+  background: #0f172a;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cd-progress-bar div {
+  height: 100%;
+  background: var(--spot-primary);
+  border-radius: 999px;
+}
+
+.cd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+  margin-bottom: 22px;
+}
+
+.cd-kpi-grid-small {
+  grid-template-columns: 1fr 1fr 2fr;
+}
+
+.cd-kpi-card {
+  background: var(--spot-card);
+  border: 1px solid var(--spot-border);
+  border-radius: 26px;
+  padding: 28px;
+  min-height: 170px;
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 18px;
+  align-items: center;
+}
+
+.cd-kpi-alert {
+  border: 2px solid var(--spot-warning);
+}
+
+.cd-kpi-icon {
+  width: 66px;
+  height: 66px;
+  border-radius: 999px;
+  background: rgba(203, 213, 225, 0.08);
+  display: grid;
+  place-items: center;
+}
+
+.cd-kpi-icon svg {
+  width: 38px;
+  height: 38px;
+  color: var(--spot-primary);
+}
+
+.cd-kpi-card h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.cd-kpi-card strong {
+  display: block;
+  color: var(--spot-primary);
+  font-size: 58px;
+  line-height: 1;
+  margin: 12px 0;
+}
+
+.cd-kpi-card p {
+  margin: 0;
+  font-size: 20px;
+}
+
+.cd-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.cd-panel-card {
+  background: var(--spot-card);
+  border: 1px solid var(--spot-border);
+  border-radius: 26px;
+  padding: 30px;
+}
+
+.cd-panel-card h2 {
+  font-size: 34px;
+  margin-top: 0;
+}
+
+.cd-status-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.cd-status-item {
+  background: #0f172a;
+  border: 1px solid var(--spot-border);
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.cd-status-item span {
+  display: block;
+  color: var(--spot-muted);
+  font-size: 18px;
+}
+
+.cd-status-item strong {
+  display: block;
+  color: var(--spot-primary);
+  font-size: 42px;
+  margin-top: 8px;
+}
+
+.cd-ranking-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0f172a;
+  border: 1px solid var(--spot-border);
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 12px;
+  font-size: 22px;
+}
+
+.cd-ranking-row strong {
+  color: var(--spot-primary);
+}
+
+@media (max-width: 1200px) {
+  .cd-kpi-grid,
+  .cd-kpi-grid-small,
+  .cd-bottom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cd-kpi-wide {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .cd-panel-page {
+    padding: 18px;
+  }
+
+  .cd-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .cd-panel-header h1 {
+    font-size: 42px;
+  }
+
+  .cd-kpi-grid,
+  .cd-kpi-grid-small,
+  .cd-bottom-grid,
+  .cd-status-list {
+    grid-template-columns: 1fr;
+  }
+
+  .cd-kpi-card {
+    grid-template-columns: 62px 1fr;
+  }
+
+  .cd-kpi-wide {
+    grid-column: auto;
+  }
 }

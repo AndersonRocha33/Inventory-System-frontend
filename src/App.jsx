@@ -403,15 +403,15 @@ function InventoryPage() {
         </div>
 
         <nav className="sidebar-actions">
-          <button onClick={openDashboard}>
-            <BarChart3 size={24} />
-            Dashboard
-          </button>
+        <button onClick={openDashboard}>
+          <BarChart3 size={24} />
+            Dashboard Executivo
+        </button>
 
-          <button onClick={openTvDashboard}>
-            <Monitor size={24} />
-            TV/CD
-          </button>
+        <button onClick={openTvDashboard}>
+          <Monitor size={24} />
+            Painel CD
+        </button>
 
           <button onClick={openHistoryReport}>
             <History size={24} />

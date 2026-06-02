@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useState } from "react"
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock3,
+  Monitor,
+  Package,
+  RotateCcw,
+  Users,
+  Zap
+} from "lucide-react"
 import api from "../services/api"
+import "../index.css"
 
 function formatDateTime(value) {
   if (!value) return "Sem previsão"
@@ -25,7 +36,7 @@ function TvDashboardPage() {
       setReport(response.data)
       setError("")
     } catch {
-      setError("Erro ao carregar dashboard")
+      setError("Erro ao carregar Painel CD")
     }
   }, [inventarioId])
 
@@ -40,75 +51,137 @@ function TvDashboardPage() {
   }, [loadDashboard])
 
   if (error) {
-    return <div style={styles.page}><h1>{error}</h1></div>
+    return (
+      <div className="cd-panel-page">
+        <h1>{error}</h1>
+      </div>
+    )
   }
 
   if (!report) {
-    return <div style={styles.page}><h1>Carregando dashboard...</h1></div>
+    return (
+      <div className="cd-panel-page">
+        <h1>Carregando Painel CD...</h1>
+      </div>
+    )
   }
 
   const { resumo, rankingOperadores } = report
 
   return (
-    <div style={styles.page}>
-      <header style={styles.header}>
+    <div className="cd-panel-page">
+      <header className="cd-panel-header">
         <div>
-          <div style={styles.logo}>SpotInventory</div>
-          <h1 style={styles.title}>Dashboard TV/CD</h1>
-          <p style={styles.subtitle}>Inventário #{inventarioId}</p>
+          <p className="cd-eyebrow">Acompanhamento operacional</p>
+          <h1>Painel CD</h1>
+          <span>Inventário #{inventarioId} • atualização automática a cada 30 segundos</span>
         </div>
 
-        <div style={styles.badge}>Atualização automática</div>
+        <div className="cd-live-badge">
+          <Monitor size={26} />
+          Ao vivo
+        </div>
       </header>
 
-      <section style={styles.grid}>
-        <Card title="Acuracidade atual" value={`${resumo.acuracidadeAtual}%`} subtitle="Somente posições finalizadas" highlight />
-        <Card title="Itens contados" value={resumo.itensContados} subtitle={`${resumo.percentualItensContados}% do total`} />
-        <Card title="Posições finalizadas" value={`${resumo.posicoesFinalizadas}/${resumo.totalPosicoes}`} subtitle={`${resumo.percentualPosicoesContadas}% concluído`} />
-        <Card title="Divergências abertas" value={resumo.divergenciasAbertas} subtitle="Aguardando recontagem" warning />
-      </section>
-
-      <section style={styles.grid}>
-        <Card title="Operadores ativos" value={resumo.operadoresAtivos} subtitle="Últimos 30 minutos" />
-        <Card title="Última hora" value={`+${resumo.itensUltimaHora}`} subtitle="Itens contados" />
-        <Card title="Previsão término" value={formatDateTime(resumo.previsaoTermino)} subtitle="Baseado no ritmo atual" />
-        <Card title="Itens extras" value={resumo.itensExtras} subtitle="Encontrados a mais" />
-      </section>
-
-      <section style={styles.progressPanel}>
-        <div style={styles.progressHeader}>
-          <span>Progresso geral das posições</span>
+      <section className="cd-progress-card">
+        <div>
+          <span>Progresso de posições</span>
           <strong>{resumo.percentualPosicoesContadas}%</strong>
         </div>
 
-        <div style={styles.progressTrack}>
+        <div className="cd-progress-bar">
           <div
             style={{
-              ...styles.progressFill,
               width: `${Math.min(Number(resumo.percentualPosicoesContadas), 100)}%`
             }}
           />
         </div>
+
+        <p>
+          {resumo.posicoesFinalizadas} de {resumo.totalPosicoes} posições finalizadas
+        </p>
       </section>
 
-      <section style={styles.bottomGrid}>
-        <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>Status das posições</h2>
+      <section className="cd-kpi-grid">
+        <Kpi
+          icon={<Package />}
+          title="Pendentes"
+          value={resumo.posicoesPendentes}
+          subtitle="aguardando contagem"
+        />
 
-          <div style={styles.statusGrid}>
+        <Kpi
+          icon={<RotateCcw />}
+          title="Em contagem"
+          value={resumo.posicoesEmAndamento}
+          subtitle="em andamento agora"
+        />
+
+        <Kpi
+          icon={<AlertTriangle />}
+          title="Recontagem"
+          value={resumo.posicoesRecontagem}
+          subtitle="com divergência"
+          alert
+        />
+
+        <Kpi
+          icon={<CheckCircle />}
+          title="Finalizadas"
+          value={resumo.posicoesFinalizadas}
+          subtitle="concluídas"
+        />
+      </section>
+
+      <section className="cd-kpi-grid cd-kpi-grid-small">
+        <Kpi
+          icon={<Users />}
+          title="Operadores ativos"
+          value={resumo.operadoresAtivos}
+          subtitle="últimos 30 minutos"
+        />
+
+        <Kpi
+          icon={<Zap />}
+          title="Última hora"
+          value={`+${resumo.itensUltimaHora}`}
+          subtitle="itens contados"
+        />
+
+        <Kpi
+          icon={<Clock3 />}
+          title="Previsão término"
+          value={formatDateTime(resumo.previsaoTermino)}
+          subtitle="baseado no ritmo atual"
+          wide
+        />
+      </section>
+
+      <section className="cd-bottom-grid">
+        <div className="cd-panel-card">
+          <h2>Status operacional</h2>
+
+          <div className="cd-status-list">
             <Status label="Pendentes" value={resumo.posicoesPendentes} />
-            <Status label="Em andamento" value={resumo.posicoesEmAndamento} />
+            <Status label="Em contagem" value={resumo.posicoesEmAndamento} />
             <Status label="Recontagem" value={resumo.posicoesRecontagem} />
             <Status label="Finalizadas" value={resumo.posicoesFinalizadas} />
           </div>
         </div>
 
-        <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>Ranking operadores</h2>
+        <div className="cd-panel-card">
+          <h2>Ranking rápido</h2>
+
+          {rankingOperadores.length === 0 && (
+            <p>Nenhuma contagem registrada ainda.</p>
+          )}
 
           {rankingOperadores.slice(0, 5).map((item, index) => (
-            <div key={item.operador} style={styles.rankingRow}>
-              <span>{index + 1}. {item.operador}</span>
+            <div className="cd-ranking-row" key={item.operador}>
+              <span>
+                {index + 1}. {item.operador}
+              </span>
+
               <strong>{item.percentualAcerto}%</strong>
             </div>
           ))}
@@ -118,169 +191,29 @@ function TvDashboardPage() {
   )
 }
 
-function Card({ title, value, subtitle, highlight, warning }) {
+function Kpi({ icon, title, value, subtitle, alert, wide }) {
   return (
-    <div
-      style={{
-        ...styles.card,
-        ...(highlight ? styles.highlightCard : {}),
-        ...(warning ? styles.warningCard : {})
-      }}
-    >
-      <span style={styles.cardTitle}>{title}</span>
-      <strong style={highlight ? styles.bigValue : styles.value}>{value}</strong>
-      <p style={styles.cardSubtitle}>{subtitle}</p>
+    <div className={`cd-kpi-card ${alert ? "cd-kpi-alert" : ""} ${wide ? "cd-kpi-wide" : ""}`}>
+      <div className="cd-kpi-icon">
+        {icon}
+      </div>
+
+      <div>
+        <h3>{title}</h3>
+        <strong>{value}</strong>
+        <p>{subtitle}</p>
+      </div>
     </div>
   )
 }
 
 function Status({ label, value }) {
   return (
-    <div style={styles.statusItem}>
+    <div className="cd-status-item">
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
   )
-}
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#111827",
-    color: "#ffffff",
-    padding: "34px",
-    fontFamily: "Arial, sans-serif"
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "30px"
-  },
-  logo: {
-    color: "#f5ff4f",
-    fontWeight: 900,
-    fontSize: "22px",
-    letterSpacing: "0.12em",
-    textTransform: "uppercase"
-  },
-  title: {
-    fontSize: "58px",
-    margin: "6px 0"
-  },
-  subtitle: {
-    fontSize: "26px",
-    margin: 0,
-    color: "#cbd5e1"
-  },
-  badge: {
-    border: "1px solid #f5ff4f",
-    color: "#f5ff4f",
-    padding: "14px 22px",
-    borderRadius: "999px",
-    fontWeight: 900,
-    fontSize: "20px"
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "22px",
-    marginBottom: "22px"
-  },
-  card: {
-    background: "#1f2937",
-    border: "1px solid #374151",
-    borderRadius: "28px",
-    padding: "28px",
-    boxShadow: "0 16px 34px rgba(0,0,0,.25)"
-  },
-  highlightCard: {
-    border: "2px solid #f5ff4f"
-  },
-  warningCard: {
-    border: "2px solid #f59e0b"
-  },
-  cardTitle: {
-    color: "#dbeafe",
-    fontSize: "22px",
-    fontWeight: 900
-  },
-  value: {
-    display: "block",
-    color: "#f5ff4f",
-    fontSize: "56px",
-    margin: "16px 0 8px"
-  },
-  bigValue: {
-    display: "block",
-    color: "#f5ff4f",
-    fontSize: "74px",
-    margin: "16px 0 8px"
-  },
-  cardSubtitle: {
-    color: "#cbd5e1",
-    fontSize: "18px",
-    margin: 0
-  },
-  progressPanel: {
-    background: "#1f2937",
-    border: "1px solid #374151",
-    borderRadius: "28px",
-    padding: "28px",
-    marginBottom: "22px"
-  },
-  progressHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    fontSize: "26px",
-    fontWeight: 900,
-    marginBottom: "18px"
-  },
-  progressTrack: {
-    height: "32px",
-    background: "#111827",
-    borderRadius: "999px",
-    overflow: "hidden"
-  },
-  progressFill: {
-    height: "100%",
-    background: "#f5ff4f",
-    borderRadius: "999px"
-  },
-  bottomGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "22px"
-  },
-  panel: {
-    background: "#1f2937",
-    border: "1px solid #374151",
-    borderRadius: "28px",
-    padding: "30px"
-  },
-  panelTitle: {
-    fontSize: "34px",
-    marginTop: 0
-  },
-  statusGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px"
-  },
-  statusItem: {
-    background: "#111827",
-    borderRadius: "20px",
-    padding: "20px"
-  },
-  rankingRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    background: "#111827",
-    borderRadius: "20px",
-    padding: "18px",
-    marginBottom: "12px",
-    fontSize: "22px"
-  }
 }
 
 export default TvDashboardPage
