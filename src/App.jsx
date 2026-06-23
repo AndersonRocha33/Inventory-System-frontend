@@ -40,7 +40,13 @@ import "./index.css"
 
 function formatDate(value) {
   if (!value) return "-"
-  return new Date(value).toLocaleDateString("pt-BR")
+
+  const dateOnly = String(value).split("T")[0]
+  const [year, month, day] = dateOnly.split("-")
+
+  if (!year || !month || !day) return "-"
+
+  return `${day}/${month}/${year}`
 }
 
 function InventoryPage() {
